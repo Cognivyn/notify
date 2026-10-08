@@ -19,6 +19,96 @@ export class MockPushProvider implements PushProvider {
   }
 }
 
+export function validateDeviceToken(token: string): void {
+  if (!token?.trim()) throw new Error("device token required");
+  if (token.length > 4096) throw new Error("device token too long");
+}
+
+/** Firebase Cloud Messaging (legacy HTTP API). Supports title/body/data + image. */
+export class FcmPushProvider implements PushProvider {
+  readonly name = "fcm";
+  constructor(
+    private serverKey: string,
+    private fetchFn: typeof fetch = fetch,
+  ) {
+    if (!serverKey) throw new Error("FCM serverKey required");
+  }
+  async sendPush(msg: {
+    token: string;
+    title: string;
+    body: string;
+    data?: Record<string, unknown>;
+    imageUrl?: string;
+  }) {
+    validateDeviceToken(msg.token);
+    if (!msg.title?.trim()) throw new Error("push title required");
+    if (!msg.body?.trim()) throw new Error("push body required");
+    const res = await this.fetchFn("https://fcm.googleapis.com/fcm/send", {
+      method: "POST",
+      headers: { Authorization: `key=${this.serverKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: msg.token,
+        notification: { title: msg.title, body: msg.body, ...(msg.imageUrl ? { image: msg.imageUrl } : {}) },
+        ...(msg.data ? { data: msg.data } : {}),
+      }),
+    });
+    if (!res.ok) throw new Error(`FCM error: ${res.status}`);
+    const data = (await res.json()) as { message_id?: string; messageId?: string };
+    return { messageId: String(data.message_id ?? data.messageId ?? "fcm-unknown") };
+  }
+}
+
+export interface ApnsOptions {
+  providerToken: string;
+  bundleId: string;
+  production?: boolean;
+  fetchFn?: typeof fetch;
+}
+
+/** Apple Push Notification service provider. Uses a pre-signed JWT provider token (ES256). */
+export class ApnsPushProvider implements PushProvider {
+  readonly name = "apns";
+  private fetchFn: typeof fetch;
+  constructor(private opts: ApnsOptions) {
+    if (!opts.providerToken) throw new Error("APNs providerToken required");
+    if (!opts.bundleId) throw new Error("APNs bundleId required");
+    this.fetchFn = opts.fetchFn ?? fetch;
+  }
+  async sendPush(msg: {
+    token: string;
+    title: string;
+    body: string;
+    data?: Record<string, unknown>;
+    imageUrl?: string;
+  }) {
+    validateDeviceToken(msg.token);
+    if (!msg.title?.trim()) throw new Error("push title required");
+    if (!msg.body?.trim()) throw new Error("push body required");
+    const host = this.opts.production ? "api.push.apple.com" : "api.development.push.apple.com";
+    const res = await this.fetchFn(`https://${host}/3/device/${msg.token}`, {
+      method: "POST",
+      headers: {
+        authorization: `bearer ${this.opts.providerToken}`,
+        "apns-topic": this.opts.bundleId,
+        "apns-push-type": "alert",
+        "apns-priority": "10",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        aps: {
+          alert: { title: msg.title, body: msg.body },
+          "mutable-content": msg.imageUrl ? 1 : 0,
+          ...(msg.imageUrl ? { "media-url": msg.imageUrl } : {}),
+        },
+        ...(msg.data ?? {}),
+      }),
+    });
+    if (!res.ok) throw new Error(`APNs error: ${res.status}`);
+    const apnsId = res.headers.get("apns-id");
+    return { messageId: apnsId ?? "apns-unknown" };
+  }
+}
+
 export class PushChannel implements ChannelAdapter {
   readonly channel = "push" as const;
   private tokens = new Map<string, Set<string>>();
