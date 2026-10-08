@@ -13,6 +13,14 @@
     "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "types": ["bun-types", "bun", "node"]
+    "types": ["bun-types", "bun", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "@notify/types": ["./packages/types/src/index.ts"],
+      "@notify/config": ["./packages/config/src/index.ts"],
+      "@notify/auth": ["./packages/auth/src/index.ts"],
+      "@notify/core": ["./packages/core/src/index.ts"],
+      "@notify/channels": ["./packages/channels/src/index.ts"]
+    }
   }
 }
