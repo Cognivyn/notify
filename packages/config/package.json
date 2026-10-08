@@ -1,0 +1,16 @@
+{
+  "name": "@notify/config",
+  "version": "0.1.0",
+  "description": "Configuration management for notify",
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@notify/types": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  }
+}

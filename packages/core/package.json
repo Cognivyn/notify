@@ -1,0 +1,17 @@
+{
+  "name": "@notify/core",
+  "version": "0.1.0",
+  "description": "Core notification orchestration engine",
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@notify/types": "workspace:*",
+    "@notify/config": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  }
+}
