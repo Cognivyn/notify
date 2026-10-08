@@ -5,11 +5,20 @@
     "": {
       "name": "@cognivyn/notify",
       "devDependencies": {
+        "@types/bun": "^1.4.2",
+        "@types/node": "^26.6.4",
         "bun-types": "^1.4.2",
         "eslint": "^9.12.0",
         "prettier": "^3.3.3",
         "turbo": "^2.5.4",
         "typescript": "^5.6.3",
+      },
+    },
+    "packages/auth": {
+      "name": "@notify/auth",
+      "version": "0.1.0",
+      "dependencies": {
+        "@notify/types": "workspace:*",
       },
     },
     "packages/channels": {
@@ -85,6 +94,8 @@
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
 
+    "@notify/auth": ["@notify/auth@workspace:packages/auth"],
+
     "@notify/channels": ["@notify/channels@workspace:packages/channels"],
 
     "@notify/cli": ["@notify/cli@workspace:packages/cli"],
@@ -106,6 +117,8 @@
     "@turbo/windows-64": ["@turbo/windows-64@2.11.7", "", { "os": "win32", "cpu": "x64" }, "sha512-ZIoKT7J7KutgYl4bGxmmgeUQjG+7E0nY8BF9dxUOiMH2vdTsM4JQ2uSwTYFkTR2Llbg6ghGjSmuZ8LQtkLEYjg=="],
 
     "@turbo/windows-arm64": ["@turbo/windows-arm64@2.11.7", "", { "os": "win32", "cpu": "arm64" }, "sha512-88Xv2f7SLGVJ68lRRx8o375dKmnZYNdDtvlKcPA0kZpcF93eAQd8l96BKQ0/AMHG0bMJA0Z5QqoqtetxzNsC+g=="],
+
+    "@types/bun": ["@types/bun@1.4.2", "", { "dependencies": { "bun-types": "1.4.2" } }, "sha512-GimotNn7+ZV0uVArItBbriZsR1oNf0+WTzPkdcFrzShI7k2norL0uzEaJT8T33dWr7O/c9ZDuAFQrctKCi72oQ=="],
 
     "@types/estree": ["@types/estree@1.0.9", "", {}, "sha512-GhdPgy1el4/ImP05X05Uw4cw2/M93BCUmnEvWZNStlCzEKME4Fkk+YpoA5OiHNQmoS7Cafb8Xa3Pya8m1Qrzeg=="],
 
