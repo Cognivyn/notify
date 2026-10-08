@@ -45,6 +45,51 @@ export class TwilioSmsProvider implements SmsProvider {
   }
 }
 
+export interface Msg91Options {
+  authKey: string;
+  sender: string;
+  route?: string;
+  country?: string;
+  fetchFn?: typeof fetch;
+}
+
+/** MSG91 SMS provider (India + global). Auth-key header, injectable fetch for tests. */
+export class Msg91SmsProvider implements SmsProvider {
+  readonly name = "msg91";
+  private fetchFn: typeof fetch;
+  private route: string;
+  private country: string;
+  constructor(
+    private authKey: string,
+    private sender: string,
+    opts: { route?: string; country?: string; fetchFn?: typeof fetch } = {},
+  ) {
+    if (!authKey) throw new Error("MSG91 authKey required");
+    if (!sender) throw new Error("MSG91 sender ID required");
+    this.fetchFn = opts.fetchFn ?? fetch;
+    this.route = opts.route ?? "4";
+    this.country = opts.country ?? "91";
+  }
+  async sendSms(to: string, body: string) {
+    validatePhone(to);
+    const digits = to.replace("+", "");
+    const res = await this.fetchFn("https://api.msg91.com/api/v5/sms", {
+      method: "POST",
+      headers: { authkey: this.authKey, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        sender: this.sender,
+        route: this.route,
+        country: this.country,
+        mobiles: digits,
+        message: body,
+      }),
+    });
+    if (!res.ok) throw new Error(`MSG91 error: ${res.status}`);
+    const data = (await res.json()) as { message?: string; type?: string };
+    return { messageId: data.message ?? `msg91-${Date.now()}` };
+  }
+}
+
 export function validatePhone(to: string): void {
   if (!/^\+[1-9]\d{7,14}$/.test(to)) {
     throw new Error(`Invalid E.164 phone number: ${to}`);
