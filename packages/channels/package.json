@@ -1,0 +1,17 @@
+{
+  "name": "@notify/channels",
+  "version": "0.1.0",
+  "description": "Channel implementations (sms, email, whatsapp, push)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@notify/types": "workspace:*",
+    "@notify/config": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  }
+}

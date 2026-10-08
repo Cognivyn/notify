@@ -1,0 +1,22 @@
+{
+  "name": "@notify/cli",
+  "version": "0.1.0",
+  "description": "CLI for notify",
+  "type": "module",
+  "bin": {
+    "notify": "./src/index.ts"
+  },
+  "dependencies": {
+    "@notify/types": "workspace:*",
+    "@notify/config": "workspace:*",
+    "@notify/core": "workspace:*",
+    "@notify/channels": "workspace:*"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "dev": "bun run ./src/index.ts --help",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  }
+}

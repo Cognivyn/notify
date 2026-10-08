@@ -1,0 +1,16 @@
+{
+  "name": "@notify/types",
+  "version": "0.1.0",
+  "description": "Shared TypeScript types for notify",
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "bun test",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
