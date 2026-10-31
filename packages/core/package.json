@@ -13,21 +13,25 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./service": {
       "types": "./dist/service.d.ts",
+      "bun": "./src/service.ts",
       "import": "./dist/service.js",
       "default": "./dist/service.js"
     },
     "./builder": {
       "types": "./dist/builder.d.ts",
+      "bun": "./src/builder.ts",
       "import": "./dist/builder.js",
       "default": "./dist/builder.js"
     },
     "./queue": {
       "types": "./dist/queue.d.ts",
+      "bun": "./src/queue.ts",
       "import": "./dist/queue.js",
       "default": "./dist/queue.js"
     },

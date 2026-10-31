@@ -13,16 +13,19 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./providers": {
       "types": "./dist/providers.d.ts",
+      "bun": "./src/providers.ts",
       "import": "./dist/providers.js",
       "default": "./dist/providers.js"
     },
     "./store": {
       "types": "./dist/store.d.ts",
+      "bun": "./src/store.ts",
       "import": "./dist/store.js",
       "default": "./dist/store.js"
     },

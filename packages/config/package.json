@@ -13,11 +13,13 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./manager": {
       "types": "./dist/manager.d.ts",
+      "bun": "./src/manager.ts",
       "import": "./dist/manager.js",
       "default": "./dist/manager.js"
     },
