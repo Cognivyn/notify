@@ -3,17 +3,33 @@
   "version": "0.1.0",
   "description": "CLI for notify",
   "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
   "bin": {
-    "notify": "./src/index.ts"
+    "notify": "./dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
   "dependencies": {
     "@notify/types": "workspace:*",
     "@notify/config": "workspace:*",
+    "@notify/auth": "workspace:*",
     "@notify/core": "workspace:*",
     "@notify/channels": "workspace:*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
     "dev": "bun run ./src/index.ts --help",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test",

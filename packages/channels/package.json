@@ -3,13 +3,47 @@
   "version": "0.1.0",
   "description": "Channel implementations (sms, email, whatsapp, push)",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./sms": {
+      "types": "./dist/sms.d.ts",
+      "import": "./dist/sms.js",
+      "default": "./dist/sms.js"
+    },
+    "./email": {
+      "types": "./dist/email.d.ts",
+      "import": "./dist/email.js",
+      "default": "./dist/email.js"
+    },
+    "./whatsapp": {
+      "types": "./dist/whatsapp.d.ts",
+      "import": "./dist/whatsapp.js",
+      "default": "./dist/whatsapp.js"
+    },
+    "./push": {
+      "types": "./dist/push.d.ts",
+      "import": "./dist/push.js",
+      "default": "./dist/push.js"
+    },
+    "./package.json": "./package.json"
+  },
   "dependencies": {
     "@notify/types": "workspace:*",
     "@notify/config": "workspace:*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit",
+    "build": "tsc -p tsconfig.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "bun test",
     "clean": "rm -rf dist"

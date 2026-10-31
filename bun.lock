@@ -33,9 +33,10 @@
       "name": "@notify/cli",
       "version": "0.1.0",
       "bin": {
-        "notify": "./src/index.ts",
+        "notify": "./dist/index.js",
       },
       "dependencies": {
+        "@notify/auth": "workspace:*",
         "@notify/channels": "workspace:*",
         "@notify/config": "workspace:*",
         "@notify/core": "workspace:*",
