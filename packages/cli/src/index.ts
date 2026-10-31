@@ -63,7 +63,12 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   }
   if (cmd === "providers") {
     console.log(ok("Available providers:"));
-    for (const p of ["sms(mock,twilio)", "email(mock)", "whatsapp(mock)", "push(mock)"])
+    for (const p of [
+      "sms(mock,twilio,msg91)",
+      "email(mock,resend,ses)",
+      "whatsapp(mock)",
+      "push(mock,fcm,apns)",
+    ])
       console.log(` - ${p}`);
     return 0;
   }
@@ -94,7 +99,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     }
     const store = new SecureStore();
     try {
-      if (flags["api-key"]) store.set(`NOTIFY_${channel.toUpperCase()}_API_KEY`, String(flags["api-key"]));
+      if (flags["api-key"])
+        store.set(`NOTIFY_${channel.toUpperCase()}_API_KEY`, String(flags["api-key"]));
       else if (flags["client-id"] && flags["client-secret"]) {
         store.set(`NOTIFY_${channel.toUpperCase()}_CLIENT_ID`, String(flags["client-id"]));
         store.set(`NOTIFY_${channel.toUpperCase()}_CLIENT_SECRET`, String(flags["client-secret"]));

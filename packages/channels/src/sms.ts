@@ -36,7 +36,10 @@ export class TwilioSmsProvider implements SmsProvider {
     const auth = Buffer.from(`${this.accountSid}:${this.authToken}`).toString("base64");
     const res = await this.fetchFn(url, {
       method: "POST",
-      headers: { Authorization: `Basic ${auth}`, "Content-Type": "application/x-www-form-urlencoded" },
+      headers: {
+        Authorization: `Basic ${auth}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
       body: new URLSearchParams({ To: to, From: this.from, Body: body }).toString(),
     });
     if (!res.ok) throw new Error(`Twilio error: ${res.status}`);
@@ -56,22 +59,43 @@ export interface Msg91Options {
 /** MSG91 SMS provider (India + global). Auth-key header, injectable fetch for tests. */
 export class Msg91SmsProvider implements SmsProvider {
   readonly name = "msg91";
-  private fetchFn: typeof fetch;
+  private authKey: string;
+  private sender: string;
   private route: string;
   private country: string;
+  private fetchFn: typeof fetch;
+
+  constructor(options: Msg91Options);
   constructor(
-    private authKey: string,
-    private sender: string,
+    authKey: string,
+    sender: string,
+    opts?: { route?: string; country?: string; fetchFn?: typeof fetch },
+  );
+  constructor(
+    authKeyOrOpts: string | Msg91Options,
+    sender?: string,
     opts: { route?: string; country?: string; fetchFn?: typeof fetch } = {},
   ) {
-    if (!authKey) throw new Error("MSG91 authKey required");
-    if (!sender) throw new Error("MSG91 sender ID required");
-    this.fetchFn = opts.fetchFn ?? fetch;
-    this.route = opts.route ?? "4";
-    this.country = opts.country ?? "91";
+    if (typeof authKeyOrOpts === "object" && authKeyOrOpts !== null) {
+      this.authKey = authKeyOrOpts.authKey;
+      this.sender = authKeyOrOpts.sender;
+      this.route = authKeyOrOpts.route ?? "4";
+      this.country = authKeyOrOpts.country ?? "91";
+      this.fetchFn = authKeyOrOpts.fetchFn ?? fetch;
+    } else {
+      this.authKey = authKeyOrOpts;
+      this.sender = sender!;
+      this.route = opts.route ?? "4";
+      this.country = opts.country ?? "91";
+      this.fetchFn = opts.fetchFn ?? fetch;
+    }
+    if (!this.authKey) throw new Error("MSG91 authKey required");
+    if (!this.sender) throw new Error("MSG91 sender ID required");
   }
+
   async sendSms(to: string, body: string) {
     validatePhone(to);
+    const text = formatSms(body);
     const digits = to.replace("+", "");
     const res = await this.fetchFn("https://api.msg91.com/api/v5/sms", {
       method: "POST",
@@ -81,11 +105,12 @@ export class Msg91SmsProvider implements SmsProvider {
         route: this.route,
         country: this.country,
         mobiles: digits,
-        message: body,
+        message: text,
       }),
     });
     if (!res.ok) throw new Error(`MSG91 error: ${res.status}`);
     const data = (await res.json()) as { message?: string; type?: string };
+    if (data.type === "error") throw new Error(`MSG91 error: ${data.message ?? "unknown error"}`);
     return { messageId: data.message ?? `msg91-${Date.now()}` };
   }
 }
