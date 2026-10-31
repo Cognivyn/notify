@@ -13,26 +13,31 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./sms": {
       "types": "./dist/sms.d.ts",
+      "bun": "./src/sms.ts",
       "import": "./dist/sms.js",
       "default": "./dist/sms.js"
     },
     "./email": {
       "types": "./dist/email.d.ts",
+      "bun": "./src/email.ts",
       "import": "./dist/email.js",
       "default": "./dist/email.js"
     },
     "./whatsapp": {
       "types": "./dist/whatsapp.d.ts",
+      "bun": "./src/whatsapp.ts",
       "import": "./dist/whatsapp.js",
       "default": "./dist/whatsapp.js"
     },
     "./push": {
       "types": "./dist/push.d.ts",
+      "bun": "./src/push.ts",
       "import": "./dist/push.js",
       "default": "./dist/push.js"
     },
