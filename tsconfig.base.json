@@ -18,9 +18,13 @@
     "paths": {
       "@notify/types": ["./packages/types/src/index.ts"],
       "@notify/config": ["./packages/config/src/index.ts"],
+      "@notify/config/*": ["./packages/config/src/*.ts"],
       "@notify/auth": ["./packages/auth/src/index.ts"],
+      "@notify/auth/*": ["./packages/auth/src/*.ts"],
       "@notify/core": ["./packages/core/src/index.ts"],
-      "@notify/channels": ["./packages/channels/src/index.ts"]
+      "@notify/core/*": ["./packages/core/src/*.ts"],
+      "@notify/channels": ["./packages/channels/src/index.ts"],
+      "@notify/channels/*": ["./packages/channels/src/*.ts"]
     }
   }
 }
