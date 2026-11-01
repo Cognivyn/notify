@@ -243,7 +243,7 @@ export class SmsChannel implements ChannelAdapter {
     return this.provider.name;
   }
 
-  async send(payload: NotificationPayload): Promise<DeliveryResult> {
+  async send(payload: NotificationPayload | SmsMessage): Promise<DeliveryResult> {
     try {
       const msg = payload as SmsMessage;
       validatePhone(payload.to);

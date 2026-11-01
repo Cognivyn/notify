@@ -5,6 +5,7 @@ import {
   PushChannel,
   validateDeepLink,
   validateDeviceToken,
+  type PushMessage,
 } from "../src/push.js";
 
 describe("PushChannel", () => {

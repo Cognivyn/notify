@@ -156,15 +156,16 @@ export class PushChannel implements ChannelAdapter {
     this.tokens.get(userId)!.add(token);
   }
 
-  async send(payload: NotificationPayload): Promise<DeliveryResult> {
+  async send(payload: NotificationPayload | PushMessage): Promise<DeliveryResult> {
     try {
       const msg = payload as PushMessage;
       const token = msg.deviceToken ?? msg.to;
       if (!token) throw new Error("device token / to required");
       const title = msg.title ?? "Notification";
       if (!msg.body?.trim()) throw new Error("push body required");
-      if (msg.deepLink) {
-        validateDeepLink(msg.deepLink);
+      const deepLink = msg.deepLink ?? (payload.data?.deepLink as string | undefined);
+      if (deepLink) {
+        validateDeepLink(deepLink);
       }
       const { messageId } = await this.provider.sendPush({
         token,

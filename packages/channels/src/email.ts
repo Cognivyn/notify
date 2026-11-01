@@ -243,7 +243,7 @@ export class EmailChannel implements ChannelAdapter {
     return this.provider.name;
   }
 
-  async send(payload: NotificationPayload): Promise<DeliveryResult> {
+  async send(payload: NotificationPayload | EmailOptions): Promise<DeliveryResult> {
     try {
       validateEmail(payload.to);
       const subject = payload.title ?? "(no subject)";

@@ -43,7 +43,7 @@ export function validateWhatsApp(msg: WhatsAppMessage): void {
 export class WhatsAppChannel implements ChannelAdapter {
   readonly channel = "whatsapp" as const;
   constructor(private provider: WhatsAppProvider = new MockWhatsAppProvider()) {}
-  async send(payload: NotificationPayload): Promise<DeliveryResult> {
+  async send(payload: NotificationPayload | WhatsAppMessage): Promise<DeliveryResult> {
     try {
       const msg = payload as WhatsAppMessage;
       validateWhatsApp(msg);
