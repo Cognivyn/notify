@@ -221,12 +221,12 @@ describe("TwilioWhatsAppProvider", () => {
   test("sends text message with automatic whatsapp: prefix", async () => {
     let capturedUrl = "";
     let capturedHeaders: Record<string, string> = {};
-    let capturedParams: URLSearchParams | null = null;
+    let capturedBody = "";
 
     const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
       capturedUrl = String(url);
       capturedHeaders = (init?.headers ?? {}) as Record<string, string>;
-      capturedParams = new URLSearchParams(init?.body as string);
+      capturedBody = init?.body as string;
       return new Response(JSON.stringify({ sid: "SM1234567890" }), { status: 200 });
     }) as unknown as typeof fetch;
 
@@ -242,20 +242,21 @@ describe("TwilioWhatsAppProvider", () => {
       body: "Twilio WhatsApp test",
     });
 
+    const capturedParams = new URLSearchParams(capturedBody);
     expect(res.messageId).toBe("SM1234567890");
     expect(capturedUrl).toContain("AC1234567890abcdef/Messages.json");
-    expect(capturedParams?.get("To")).toBe("whatsapp:+15551234567");
-    expect(capturedParams?.get("From")).toBe("whatsapp:+14155238886");
-    expect(capturedParams?.get("Body")).toBe("Twilio WhatsApp test");
+    expect(capturedParams.get("To")).toBe("whatsapp:+15551234567");
+    expect(capturedParams.get("From")).toBe("whatsapp:+14155238886");
+    expect(capturedParams.get("Body")).toBe("Twilio WhatsApp test");
     expect(capturedHeaders["Authorization"]).toBe(
       `Basic ${Buffer.from("AC1234567890abcdef:auth-secret").toString("base64")}`,
     );
   });
 
   test("sends media message with MediaUrl param", async () => {
-    let capturedParams: URLSearchParams | null = null;
+    let capturedBody = "";
     const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
-      capturedParams = new URLSearchParams(init?.body as string);
+      capturedBody = init?.body as string;
       return new Response(JSON.stringify({ sid: "MM1234567890" }), { status: 200 });
     }) as unknown as typeof fetch;
 
@@ -272,8 +273,9 @@ describe("TwilioWhatsAppProvider", () => {
       mediaUrl: "https://example.com/pic.jpg",
     });
 
+    const capturedParams = new URLSearchParams(capturedBody);
     expect(res.messageId).toBe("MM1234567890");
-    expect(capturedParams?.get("MediaUrl")).toBe("https://example.com/pic.jpg");
+    expect(capturedParams.get("MediaUrl")).toBe("https://example.com/pic.jpg");
   });
 
   test("surfaces Twilio error status", async () => {

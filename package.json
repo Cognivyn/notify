@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "description": "Cognivyn unified notification channel connection system",
-  "packageManager": "bun@1.4.2",
+  "packageManager": "bun@1.4.3",
   "workspaces": [
     "packages/*"
   ],
@@ -15,7 +15,7 @@
     "lint": "eslint packages --ext .ts",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
-    "type-check": "turbo run type-check",
+    "type-check": "turbo run type-check && tsc --noEmit",
     "clean": "turbo run clean"
   },
   "devDependencies": {
@@ -28,6 +28,6 @@
     "typescript": "^5.6.3"
   },
   "engines": {
-    "bun": ">=1.4.2"
+    "bun": ">=1.4.3"
   }
 }
