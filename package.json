@@ -15,7 +15,7 @@
     "lint": "eslint packages --ext .ts",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
-    "typecheck": "turbo run typecheck",
+    "type-check": "turbo run type-check",
     "clean": "turbo run clean"
   },
   "devDependencies": {

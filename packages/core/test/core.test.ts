@@ -1,5 +1,10 @@
 import { describe, expect, test } from "bun:test";
-import { NotificationService, NotificationBuilder, NotificationQueue, notify } from "../src/index.js";
+import {
+  NotificationService,
+  NotificationBuilder,
+  NotificationQueue,
+  notify,
+} from "../src/index.js";
 import type { ChannelAdapter, NotificationPayload } from "@notify/types";
 
 function mockAdapter(channel: "sms" | "email" | "whatsapp" | "push", ok = true): ChannelAdapter {
@@ -36,13 +41,28 @@ describe("NotificationService", () => {
     );
     expect(r.success).toBe(true);
   });
-  test("sendMany batches", async () => {
-    const s = new NotificationService().register(mockAdapter("sms"));
-    const rs = await s.sendMany([
-      { channel: "sms", to: "a", body: "1" },
-      { channel: "sms", to: "b", body: "2" },
-    ]);
-    expect(rs.length).toBe(2);
+  test("sendMany batches with bounded concurrency", async () => {
+    let currentConcurrent = 0;
+    let maxSeenConcurrent = 0;
+    const slowAdapter: ChannelAdapter = {
+      channel: "sms",
+      send: async () => {
+        currentConcurrent++;
+        maxSeenConcurrent = Math.max(maxSeenConcurrent, currentConcurrent);
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        currentConcurrent--;
+        return { success: true, channel: "sms", messageId: "sms-slow" };
+      },
+    };
+    const s = new NotificationService().register(slowAdapter);
+    const payloads = Array.from({ length: 15 }, (_, i) => ({
+      channel: "sms" as const,
+      to: `+1555000${i}`,
+      body: `msg ${i}`,
+    }));
+    const rs = await s.sendMany(payloads, 3);
+    expect(rs.length).toBe(15);
+    expect(maxSeenConcurrent).toBeLessThanOrEqual(3);
   });
 });
 

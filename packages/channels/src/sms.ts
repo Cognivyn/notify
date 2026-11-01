@@ -41,6 +41,9 @@ export class TwilioSmsProvider implements SmsProvider {
     private fetchFn: typeof fetch = fetch,
   ) {
     if (!accountSid) throw new Error("Twilio accountSid required");
+    if (!/^[a-zA-Z0-9_-]+$/.test(accountSid)) {
+      throw new Error("Twilio accountSid contains illegal characters");
+    }
     if (!authToken) throw new Error("Twilio authToken required");
     if (!from) throw new Error("Twilio from number required");
   }
@@ -134,15 +137,18 @@ export class Msg91SmsProvider implements SmsProvider {
 
   async sendSms(to: string, body: string, options?: Msg91SendOptions) {
     validatePhone(to);
-    const text = formatSms(body);
     const digits = to.replace("+", "");
     const effectiveTemplate = options?.templateId ?? this.templateId;
 
     if (effectiveTemplate) {
+      // Prevent parameter pollution from overwriting mobiles
+      const { mobiles: _m, ...safeVariables } = (options?.variables ?? {}) as Record<
+        string,
+        unknown
+      >;
       const recipient: Record<string, unknown> = {
         mobiles: digits,
-        ...(options?.variables ?? {}),
-        message: text,
+        ...safeVariables,
       };
       const payload: Record<string, unknown> = {
         template_id: effectiveTemplate,
@@ -166,6 +172,7 @@ export class Msg91SmsProvider implements SmsProvider {
       return this.handleResponse(res);
     }
 
+    const text = formatSms(body);
     if (!this.sender) {
       throw new Error("MSG91 sender ID required for route-based SMS");
     }
@@ -240,14 +247,22 @@ export class SmsChannel implements ChannelAdapter {
     try {
       const msg = payload as SmsMessage;
       validatePhone(payload.to);
-      const body = formatSms(payload.body);
       const sendOpts: Msg91SendOptions = {
         templateId: msg.templateId ?? (payload.data?.templateId as string | undefined),
         variables:
-          msg.variables ??
-          (payload.data?.variables as Record<string, string | number> | undefined),
+          msg.variables ?? (payload.data?.variables as Record<string, string | number> | undefined),
         shortUrl: msg.shortUrl ?? (payload.data?.shortUrl as boolean | undefined),
       };
+
+      const isTemplated = Boolean(sendOpts.templateId);
+      const rawBody = payload.body?.trim();
+      let body = "";
+      if (isTemplated) {
+        body = rawBody ? formatSms(payload.body) : "";
+      } else {
+        body = formatSms(payload.body);
+      }
+
       let lastErr = "";
       for (let attempt = 0; attempt <= this.retries; attempt++) {
         try {

@@ -1,5 +1,11 @@
 import { describe, expect, test } from "bun:test";
-import { ApnsPushProvider, FcmPushProvider, PushChannel } from "../src/push.js";
+import {
+  ApnsPushProvider,
+  FcmPushProvider,
+  PushChannel,
+  validateDeepLink,
+  validateDeviceToken,
+} from "../src/push.js";
 
 describe("PushChannel", () => {
   test("sends push", async () => {
@@ -15,6 +21,69 @@ describe("PushChannel", () => {
     const c = new PushChannel();
     c.registerToken("u1", "t1");
     expect(true).toBe(true);
+  });
+
+  test("rejects dangerous deepLink schemes", async () => {
+    const c = new PushChannel();
+    const r1 = await c.send({
+      channel: "push",
+      to: "tok",
+      body: "msg",
+      deepLink: "javascript://alert(1)",
+    });
+    expect(r1.success).toBe(false);
+    expect(r1.error).toContain("scheme 'javascript' is not allowed");
+
+    const r2 = await c.send({
+      channel: "push",
+      to: "tok",
+      body: "msg",
+      deepLink: "data://text/html;base64,123",
+    });
+    expect(r2.success).toBe(false);
+    expect(r2.error).toContain("scheme 'data' is not allowed");
+
+    const r3 = await c.send({
+      channel: "push",
+      to: "tok",
+      body: "msg",
+      deepLink: "//malicious.com",
+    });
+    expect(r3.success).toBe(false);
+    expect(r3.error).toContain("protocol-relative URL not allowed");
+  });
+
+  test("accepts safe deepLinks", async () => {
+    const c = new PushChannel();
+    expect(
+      (
+        await c.send({
+          channel: "push",
+          to: "tok",
+          body: "msg",
+          deepLink: "https://example.com/item",
+        })
+      ).success,
+    ).toBe(true);
+    expect(
+      (await c.send({ channel: "push", to: "tok", body: "msg", deepLink: "myapp://orders/42" }))
+        .success,
+    ).toBe(true);
+    expect(
+      (await c.send({ channel: "push", to: "tok", body: "msg", deepLink: "/dashboard" })).success,
+    ).toBe(true);
+  });
+});
+
+describe("validateDeviceToken", () => {
+  test("rejects tokens with path traversal or control characters", () => {
+    expect(() => validateDeviceToken("../../etc/passwd")).toThrow(
+      "illegal characters or path traversal",
+    );
+    expect(() => validateDeviceToken("tok/with/slashes")).toThrow(
+      "illegal characters or path traversal",
+    );
+    expect(() => validateDeviceToken("tok\r\nbad")).toThrow("illegal characters or path traversal");
   });
 });
 
@@ -103,5 +172,11 @@ describe("ApnsPushProvider", () => {
   });
   test("validates config", () => {
     expect(() => new ApnsPushProvider({ providerToken: "", bundleId: "b" })).toThrow();
+  });
+  test("rejects tokens with illegal characters", async () => {
+    const p = new ApnsPushProvider({ providerToken: "jwt", bundleId: "b" });
+    await expect(p.sendPush({ token: "token?param=1", title: "t", body: "b" })).rejects.toThrow(
+      "illegal characters",
+    );
   });
 });

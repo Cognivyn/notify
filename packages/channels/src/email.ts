@@ -15,7 +15,12 @@ export interface EmailOptions extends NotificationPayload {
 
 export interface EmailProvider {
   readonly name: string;
-  sendEmail(opts: { to: string; subject: string; text: string; html?: string }): Promise<{ messageId: string }>;
+  sendEmail(opts: {
+    to: string;
+    subject: string;
+    text: string;
+    html?: string;
+  }): Promise<{ messageId: string }>;
 }
 
 export class MockEmailProvider implements EmailProvider {
@@ -25,6 +30,28 @@ export class MockEmailProvider implements EmailProvider {
     this.sent.push({ to: opts.to, subject: opts.subject });
     return { messageId: `email-mock-${this.sent.length}` };
   }
+}
+
+export function validateEmail(to: string): void {
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error(`Invalid email: ${to}`);
+}
+
+export function validateSubject(subject: string): void {
+  if (/[\r\n]/.test(subject)) {
+    throw new Error("Email subject must not contain CRLF characters");
+  }
+  if (subject.length > 998) {
+    throw new Error("Email subject exceeds maximum length of 998 characters");
+  }
+}
+
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 }
 
 /** Resend (https://resend.com) email provider. Zero deps, injectable fetch for tests. */
@@ -41,6 +68,7 @@ export class ResendEmailProvider implements EmailProvider {
   }
   async sendEmail(opts: { to: string; subject: string; text: string; html?: string }) {
     validateEmail(opts.to);
+    validateSubject(opts.subject);
     if (!opts.subject?.trim()) throw new Error("Email subject required");
     if (!opts.text?.trim() && !opts.html?.trim()) throw new Error("Email body must not be empty");
     const res = await this.fetchFn("https://api.resend.com/emails", {
@@ -77,7 +105,14 @@ function hmacSha256(key: Buffer | string, data: string): Buffer {
   return createHmac("sha256", key).update(data, "utf8").digest();
 }
 
-/** Minimal AWS Signature V4 signer for SESv2 (stdlib crypto only). */
+function awsUriEncode(str: string): string {
+  return encodeURIComponent(str).replace(
+    /[!'()*]/g,
+    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
+  );
+}
+
+/** Minimal AWS Signature V4 signer for SESv2 (stdlib crypto only, RFC 3986 compliant). */
 function signSesV4(opts: {
   method: string;
   url: URL;
@@ -93,17 +128,27 @@ function signSesV4(opts: {
   const signedHeaders = ["content-type", "host", "x-amz-date"];
   if (opts.sessionToken) signedHeaders.push("x-amz-security-token");
   signedHeaders.sort();
-  const canonicalHeaders = signedHeaders.map((h) => `${h}:${opts.headers[h]!.trim()}\n`).join("");
+  const canonicalHeaders = signedHeaders
+    .map((h) => `${h}:${opts.headers[h]!.trim().replace(/\s+/g, " ")}\n`)
+    .join("");
+  const searchEntries = Array.from(opts.url.searchParams.entries()).sort(([a], [b]) =>
+    a.localeCompare(b),
+  );
+  const canonicalQueryString = searchEntries
+    .map(([k, v]) => `${awsUriEncode(k)}=${awsUriEncode(v)}`)
+    .join("&");
   const canonicalRequest = [
     opts.method,
     opts.url.pathname,
-    opts.url.searchParams.toString(),
+    canonicalQueryString,
     canonicalHeaders,
     signedHeaders.join(";"),
     sha256Hex(opts.payload),
   ].join("\n");
   const scope = `${dateStamp}/${opts.region}/ses/aws4_request`;
-  const stringToSign = ["AWS4-HMAC-SHA256", opts.amzDate, scope, sha256Hex(canonicalRequest)].join("\n");
+  const stringToSign = ["AWS4-HMAC-SHA256", opts.amzDate, scope, sha256Hex(canonicalRequest)].join(
+    "\n",
+  );
   const kDate = hmacSha256(`AWS4${opts.secretAccessKey}`, dateStamp);
   const kRegion = hmacSha256(kDate, opts.region);
   const kService = hmacSha256(kRegion, "ses");
@@ -131,6 +176,7 @@ export class SesEmailProvider implements EmailProvider {
   }
   async sendEmail(msg: { to: string; subject: string; text: string; html?: string }) {
     validateEmail(msg.to);
+    validateSubject(msg.subject);
     if (!msg.subject?.trim()) throw new Error("Email subject required");
     if (!msg.text?.trim() && !msg.html?.trim()) throw new Error("Email body must not be empty");
     const url = new URL(`https://email.${this.opts.region}.amazonaws.com/v2/email/outbound-emails`);
@@ -172,13 +218,21 @@ export class SesEmailProvider implements EmailProvider {
   }
 }
 
-/** Minimal template renderer: replaces {{key}} tokens. Zero deps. */
-export function renderTemplate(template: string, vars: Record<string, unknown> = {}): string {
-  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k: string) => String(vars[k] ?? ""));
+export interface RenderTemplateOptions {
+  escapeHtml?: boolean;
 }
 
-export function validateEmail(to: string): void {
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)) throw new Error(`Invalid email: ${to}`);
+/** Minimal template renderer: replaces {{key}} tokens. Zero deps. Supports HTML entity escaping. */
+export function renderTemplate(
+  template: string,
+  vars: Record<string, unknown> = {},
+  options: RenderTemplateOptions = {},
+): string {
+  const shouldEscape = options.escapeHtml ?? false;
+  return template.replace(/\{\{\s*(\w+)\s*\}\}/g, (_, k: string) => {
+    const val = String(vars[k] ?? "");
+    return shouldEscape ? escapeHtml(val) : val;
+  });
 }
 
 export class EmailChannel implements ChannelAdapter {
@@ -193,13 +247,18 @@ export class EmailChannel implements ChannelAdapter {
     try {
       validateEmail(payload.to);
       const subject = payload.title ?? "(no subject)";
+      validateSubject(subject);
       const text = payload.body;
       if (!text.trim()) throw new Error("Email body must not be empty");
       const html = payload.data?.["html"] as string | undefined;
       const { messageId } = await this.provider.sendEmail({ to: payload.to, subject, text, html });
       return { success: true, channel: "email", messageId };
     } catch (e) {
-      return { success: false, channel: "email", error: e instanceof Error ? e.message : String(e) };
+      return {
+        success: false,
+        channel: "email",
+        error: e instanceof Error ? e.message : String(e),
+      };
     }
   }
 }
