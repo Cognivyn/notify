@@ -1,12 +1,33 @@
 import { describe, expect, test } from "bun:test";
-import { SmsChannel, MockSmsProvider } from "@notify/channels/sms";
-import { EmailChannel, MockEmailProvider } from "@notify/channels/email";
-import { WhatsAppChannel } from "@notify/channels/whatsapp";
-import { PushChannel } from "@notify/channels/push";
+import {
+  SmsChannel,
+  MockSmsProvider,
+  TwilioSmsProvider,
+  Msg91SmsProvider,
+} from "@notify/channels/sms";
+import {
+  EmailChannel,
+  MockEmailProvider,
+  ResendEmailProvider,
+  SesEmailProvider,
+} from "@notify/channels/email";
+import {
+  WhatsAppChannel,
+  MockWhatsAppProvider,
+  WhatsAppCloudApiProvider,
+  TwilioWhatsAppProvider,
+} from "@notify/channels/whatsapp";
+import {
+  PushChannel,
+  MockPushProvider,
+  FcmV1PushProvider,
+  FcmPushProvider,
+  ApnsPushProvider,
+} from "@notify/channels/push";
 import { NotificationService } from "@notify/core/service";
 import { NotificationBuilder } from "@notify/core/builder";
 import { NotificationQueue } from "@notify/core/queue";
-import { ApiKeyAuth } from "@notify/auth/providers";
+import { ApiKeyAuth, ClientSecretAuth } from "@notify/auth/providers";
 import { SecureStore } from "@notify/auth/store";
 import { ConfigManager } from "@notify/config/manager";
 
@@ -24,7 +45,7 @@ describe("tree-shakable subpath imports", () => {
     });
     expect(emailRes.success).toBe(true);
 
-    const whatsapp = new WhatsAppChannel();
+    const whatsapp = new WhatsAppChannel(new MockWhatsAppProvider());
     const waRes = await whatsapp.send({
       channel: "whatsapp",
       to: "+15551234567",
@@ -32,9 +53,21 @@ describe("tree-shakable subpath imports", () => {
     });
     expect(waRes.success).toBe(true);
 
-    const push = new PushChannel();
+    const push = new PushChannel(new MockPushProvider());
     const pushRes = await push.send({ channel: "push", to: "device-tok", body: "subpath push" });
     expect(pushRes.success).toBe(true);
+  });
+
+  test("imports all modern providers directly from their subpaths", () => {
+    expect(TwilioSmsProvider).toBeDefined();
+    expect(Msg91SmsProvider).toBeDefined();
+    expect(ResendEmailProvider).toBeDefined();
+    expect(SesEmailProvider).toBeDefined();
+    expect(WhatsAppCloudApiProvider).toBeDefined();
+    expect(TwilioWhatsAppProvider).toBeDefined();
+    expect(FcmV1PushProvider).toBeDefined();
+    expect(FcmPushProvider).toBeDefined();
+    expect(ApnsPushProvider).toBeDefined();
   });
 
   test("imports individual core subpaths", async () => {
@@ -61,6 +94,9 @@ describe("tree-shakable subpath imports", () => {
   test("imports individual auth and config subpaths", () => {
     const auth = new ApiKeyAuth("secret-key");
     expect(auth.headers().Authorization).toBe("Bearer secret-key");
+
+    const clientSecretAuth = new ClientSecretAuth("client-id", "client-secret");
+    expect(clientSecretAuth.headers().Authorization).toBeDefined();
 
     const store = new SecureStore();
     store.set("TEST_KEY", "value");

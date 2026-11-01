@@ -85,13 +85,13 @@ const msg91 = new SmsChannel({
 
 ## Configuration & Environment Variables
 
-| Variable            | Description                                                                     | Default        |
-| ------------------- | ------------------------------------------------------------------------------- | -------------- |
-| `MSG91_AUTH_KEY`    | MSG91 API authentication key (passed in `authkey` header)                       | Required       |
-| `MSG91_TEMPLATE_ID` | Default template / Flow ID for Flow API delivery (`/api/v5/flow`)               | Optional       |
+| Variable            | Description                                                                      | Default        |
+| ------------------- | -------------------------------------------------------------------------------- | -------------- |
+| `MSG91_AUTH_KEY`    | MSG91 API authentication key (passed in `authkey` header)                        | Required       |
+| `MSG91_TEMPLATE_ID` | Default template / Flow ID for Flow API delivery (`/api/v5/flow`)                | Optional       |
 | `MSG91_SENDER`      | 6-character sender ID approved in MSG91 dashboard (required for route-based SMS) | Optional       |
-| `MSG91_ROUTE`       | SMS delivery route (`"4"` for transactional SMS, `"1"` for promotional)         | `"4"`          |
-| `MSG91_COUNTRY`     | Default country code prefix                                                     | `"91"` (India) |
+| `MSG91_ROUTE`       | SMS delivery route (`"4"` for transactional SMS, `"1"` for promotional)          | `"4"`          |
+| `MSG91_COUNTRY`     | Default country code prefix                                                      | `"91"` (India) |
 
 ## Phone Number Validation
 

@@ -23,7 +23,9 @@ describe("channels integration", () => {
   });
   test("whatsapp + push flows", async () => {
     const svc = fullService();
-    expect((await svc.send({ channel: "whatsapp", to: "+15551234567", body: "hi" })).success).toBe(true);
+    expect((await svc.send({ channel: "whatsapp", to: "+15551234567", body: "hi" })).success).toBe(
+      true,
+    );
     expect((await svc.send({ channel: "push", to: "tok", body: "hi" })).success).toBe(true);
   });
   test("error scenarios surface cleanly", async () => {
