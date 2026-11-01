@@ -1,20 +1,33 @@
 import type { ChannelAdapter, DeliveryResult, NotificationPayload } from "@notify/types";
 
+export interface Msg91SendOptions {
+  templateId?: string;
+  variables?: Record<string, string | number>;
+  shortUrl?: boolean;
+  extra?: Record<string, unknown>;
+}
+
+export interface SmsMessage extends NotificationPayload {
+  templateId?: string;
+  variables?: Record<string, string | number>;
+  shortUrl?: boolean;
+}
+
 export interface SmsProvider {
   readonly name: string;
-  sendSms(to: string, body: string): Promise<{ messageId: string }>;
+  sendSms(to: string, body: string, options?: Msg91SendOptions): Promise<{ messageId: string }>;
 }
 
 export class MockSmsProvider implements SmsProvider {
   readonly name = "mock";
-  sent: Array<{ to: string; body: string }> = [];
+  sent: Array<{ to: string; body: string; options?: Msg91SendOptions }> = [];
   failNext = false;
-  async sendSms(to: string, body: string) {
+  async sendSms(to: string, body: string, options?: Msg91SendOptions) {
     if (this.failNext) {
       this.failNext = false;
       throw new Error("mock sms failure");
     }
-    this.sent.push({ to, body });
+    this.sent.push({ to, body, options });
     return { messageId: `sms-mock-${this.sent.length}` };
   }
 }
@@ -50,54 +63,114 @@ export class TwilioSmsProvider implements SmsProvider {
 
 export interface Msg91Options {
   authKey: string;
-  sender: string;
+  sender?: string;
+  templateId?: string;
   route?: string;
   country?: string;
+  baseUrl?: string;
+  flowUrl?: string;
   fetchFn?: typeof fetch;
 }
 
-/** MSG91 SMS provider (India + global). Auth-key header, injectable fetch for tests. */
+/** MSG91 SMS provider (Flow API + route-based SMS fallback). Auth-key header, injectable fetch for tests. */
 export class Msg91SmsProvider implements SmsProvider {
   readonly name = "msg91";
   private authKey: string;
-  private sender: string;
+  private sender?: string;
+  private templateId?: string;
   private route: string;
   private country: string;
+  private baseUrl: string;
+  private flowUrl: string;
   private fetchFn: typeof fetch;
 
   constructor(options: Msg91Options);
   constructor(
     authKey: string,
-    sender: string,
-    opts?: { route?: string; country?: string; fetchFn?: typeof fetch },
+    sender?: string,
+    opts?: {
+      route?: string;
+      country?: string;
+      templateId?: string;
+      baseUrl?: string;
+      flowUrl?: string;
+      fetchFn?: typeof fetch;
+    },
   );
   constructor(
     authKeyOrOpts: string | Msg91Options,
     sender?: string,
-    opts: { route?: string; country?: string; fetchFn?: typeof fetch } = {},
+    opts: {
+      route?: string;
+      country?: string;
+      templateId?: string;
+      baseUrl?: string;
+      flowUrl?: string;
+      fetchFn?: typeof fetch;
+    } = {},
   ) {
     if (typeof authKeyOrOpts === "object" && authKeyOrOpts !== null) {
       this.authKey = authKeyOrOpts.authKey;
       this.sender = authKeyOrOpts.sender;
+      this.templateId = authKeyOrOpts.templateId;
       this.route = authKeyOrOpts.route ?? "4";
       this.country = authKeyOrOpts.country ?? "91";
+      this.baseUrl = authKeyOrOpts.baseUrl ?? "https://api.msg91.com/api/v5/sms";
+      this.flowUrl = authKeyOrOpts.flowUrl ?? "https://control.msg91.com/api/v5/flow";
       this.fetchFn = authKeyOrOpts.fetchFn ?? fetch;
     } else {
       this.authKey = authKeyOrOpts;
-      this.sender = sender!;
+      this.sender = sender;
+      this.templateId = opts.templateId;
       this.route = opts.route ?? "4";
       this.country = opts.country ?? "91";
+      this.baseUrl = opts.baseUrl ?? "https://api.msg91.com/api/v5/sms";
+      this.flowUrl = opts.flowUrl ?? "https://control.msg91.com/api/v5/flow";
       this.fetchFn = opts.fetchFn ?? fetch;
     }
     if (!this.authKey) throw new Error("MSG91 authKey required");
-    if (!this.sender) throw new Error("MSG91 sender ID required");
+    if (!this.sender && !this.templateId) throw new Error("MSG91 sender ID required");
   }
 
-  async sendSms(to: string, body: string) {
+  async sendSms(to: string, body: string, options?: Msg91SendOptions) {
     validatePhone(to);
     const text = formatSms(body);
     const digits = to.replace("+", "");
-    const res = await this.fetchFn("https://api.msg91.com/api/v5/sms", {
+    const effectiveTemplate = options?.templateId ?? this.templateId;
+
+    if (effectiveTemplate) {
+      const recipient: Record<string, unknown> = {
+        mobiles: digits,
+        ...(options?.variables ?? {}),
+        message: text,
+      };
+      const payload: Record<string, unknown> = {
+        template_id: effectiveTemplate,
+        recipients: [recipient],
+      };
+      if (options?.shortUrl !== undefined) {
+        payload.short_url = options.shortUrl ? "1" : "0";
+      }
+      if (options?.extra) {
+        Object.assign(payload, options.extra);
+      }
+      const res = await this.fetchFn(this.flowUrl, {
+        method: "POST",
+        headers: {
+          authkey: this.authKey,
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+      return this.handleResponse(res);
+    }
+
+    if (!this.sender) {
+      throw new Error("MSG91 sender ID required for route-based SMS");
+    }
+
+    const res = await this.fetchFn(this.baseUrl, {
       method: "POST",
       headers: { authkey: this.authKey, "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -108,9 +181,25 @@ export class Msg91SmsProvider implements SmsProvider {
         message: text,
       }),
     });
+    return this.handleResponse(res);
+  }
+
+  private async handleResponse(res: Response): Promise<{ messageId: string }> {
     if (!res.ok) throw new Error(`MSG91 error: ${res.status}`);
-    const data = (await res.json()) as { message?: string; type?: string };
-    if (data.type === "error") throw new Error(`MSG91 error: ${data.message ?? "unknown error"}`);
+    const data = (await res.json()) as {
+      message?: string;
+      type?: string;
+      status?: string;
+      hasError?: boolean;
+      errors?: unknown;
+    };
+    if (data.type === "error" || data.status === "error" || data.hasError) {
+      const errDetail =
+        data.message ??
+        (typeof data.errors === "string" ? data.errors : JSON.stringify(data.errors)) ??
+        "unknown error";
+      throw new Error(`MSG91 error: ${errDetail}`);
+    }
     return { messageId: data.message ?? `msg91-${Date.now()}` };
   }
 }
@@ -149,12 +238,20 @@ export class SmsChannel implements ChannelAdapter {
 
   async send(payload: NotificationPayload): Promise<DeliveryResult> {
     try {
+      const msg = payload as SmsMessage;
       validatePhone(payload.to);
       const body = formatSms(payload.body);
+      const sendOpts: Msg91SendOptions = {
+        templateId: msg.templateId ?? (payload.data?.templateId as string | undefined),
+        variables:
+          msg.variables ??
+          (payload.data?.variables as Record<string, string | number> | undefined),
+        shortUrl: msg.shortUrl ?? (payload.data?.shortUrl as boolean | undefined),
+      };
       let lastErr = "";
       for (let attempt = 0; attempt <= this.retries; attempt++) {
         try {
-          const { messageId } = await this.provider.sendSms(payload.to, body);
+          const { messageId } = await this.provider.sendSms(payload.to, body, sendOpts);
           return { success: true, channel: "sms", messageId };
         } catch (e) {
           lastErr = e instanceof Error ? e.message : String(e);
