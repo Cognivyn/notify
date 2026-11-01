@@ -74,8 +74,8 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     for (const p of [
       "sms(mock,twilio,msg91)",
       "email(mock,resend,ses)",
-      "whatsapp(mock)",
-      "push(mock,fcm,apns)",
+      "whatsapp(mock,cloudapi,twilio)",
+      "push(mock,fcm,fcm-v1,apns)",
     ])
       console.log(` - ${p}`);
     return 0;

@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   ApnsPushProvider,
   FcmPushProvider,
+  FcmV1PushProvider,
   PushChannel,
   validateDeepLink,
   validateDeviceToken,
@@ -13,15 +14,24 @@ describe("PushChannel", () => {
     const c = new PushChannel();
     const r = await c.send({ channel: "push", to: "device-token-123", title: "Hi", body: "hello" });
     expect(r.success).toBe(true);
+    expect(c.providerName).toBe("mock");
   });
+
   test("rejects empty body", async () => {
     const c = new PushChannel();
     expect((await c.send({ channel: "push", to: "tok", body: " " })).success).toBe(false);
   });
+
   test("token registry", () => {
     const c = new PushChannel();
     c.registerToken("u1", "t1");
-    expect(true).toBe(true);
+    expect(c.getRegisteredTokens("u1")).toEqual(["t1"]);
+  });
+
+  test("retries on failure", async () => {
+    const mock = new PushChannel({ retries: 1 });
+    const r = await mock.send({ channel: "push", to: "tok", body: "retry test" });
+    expect(r.success).toBe(true);
   });
 
   test("rejects dangerous deepLink schemes", async () => {
@@ -88,7 +98,135 @@ describe("validateDeviceToken", () => {
   });
 });
 
-describe("FcmPushProvider", () => {
+describe("FcmV1PushProvider", () => {
+  test("sends message via modern FCM HTTP v1 API with Bearer token", async () => {
+    let capturedUrl = "";
+    let capturedHeaders: Record<string, string> = {};
+    let capturedBody: Record<string, unknown> = {};
+
+    const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
+      capturedUrl = String(url);
+      capturedHeaders = (init?.headers ?? {}) as Record<string, string>;
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(
+        JSON.stringify({ name: "projects/my-firebase-app/messages/0:1700000000123" }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
+
+    const provider = new FcmV1PushProvider({
+      projectId: "my-firebase-app",
+      accessToken: "oauth2-bearer-token",
+      fetchFn,
+    });
+
+    const res = await provider.sendPush({
+      token: "fcm-registration-token",
+      title: "New Order",
+      body: "You have a new order #101",
+      imageUrl: "https://example.com/item.png",
+      data: { orderId: 101, status: "pending" },
+    });
+
+    expect(res.messageId).toBe("projects/my-firebase-app/messages/0:1700000000123");
+    expect(capturedUrl).toBe(
+      "https://fcm.googleapis.com/v1/projects/my-firebase-app/messages:send",
+    );
+    expect(capturedHeaders["Authorization"]).toBe("Bearer oauth2-bearer-token");
+
+    const message = capturedBody.message as {
+      token: string;
+      notification: { title: string; body: string; image?: string };
+      data: Record<string, string>;
+    };
+    expect(message.token).toBe("fcm-registration-token");
+    expect(message.notification.title).toBe("New Order");
+    expect(message.notification.body).toBe("You have a new order #101");
+    expect(message.notification.image).toBe("https://example.com/item.png");
+    expect(message.data.orderId).toBe("101");
+    expect(message.data.status).toBe("pending");
+  });
+
+  test("supports async token provider function", async () => {
+    let called = false;
+    const tokenProvider = async () => {
+      called = true;
+      return "dynamic-access-token";
+    };
+
+    let capturedHeaders: Record<string, string> = {};
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      capturedHeaders = (init?.headers ?? {}) as Record<string, string>;
+      return new Response(JSON.stringify({ name: "projects/p/messages/1" }), { status: 200 });
+    }) as unknown as typeof fetch;
+
+    const provider = new FcmV1PushProvider({
+      projectId: "p",
+      accessToken: tokenProvider,
+      fetchFn,
+    });
+
+    const res = await provider.sendPush({ token: "tok", title: "T", body: "B" });
+    expect(res.messageId).toBe("projects/p/messages/1");
+    expect(called).toBe(true);
+    expect(capturedHeaders["Authorization"]).toBe("Bearer dynamic-access-token");
+  });
+
+  test("surfaces FCM v1 detailed error responses", async () => {
+    const fetchFn = (async () =>
+      new Response(
+        JSON.stringify({
+          error: {
+            code: 404,
+            message: "Requested entity was not found.",
+            status: "NOT_FOUND",
+          },
+        }),
+        { status: 404 },
+      )) as unknown as typeof fetch;
+
+    const provider = new FcmV1PushProvider({
+      projectId: "p",
+      accessToken: "tok",
+      fetchFn,
+    });
+
+    await expect(provider.sendPush({ token: "t", title: "T", body: "B" })).rejects.toThrow(
+      "FCM v1 error: Requested entity was not found.",
+    );
+  });
+
+  test("works through PushChannel", async () => {
+    const fetchFn = (async () =>
+      new Response(JSON.stringify({ name: "projects/p/messages/msg-v1" }), {
+        status: 200,
+      })) as unknown as typeof fetch;
+
+    const provider = new FcmV1PushProvider({
+      projectId: "p",
+      accessToken: "tok",
+      fetchFn,
+    });
+
+    const channel = new PushChannel(provider);
+    const res = await channel.send({
+      channel: "push",
+      to: "device-token-123",
+      title: "Hello",
+      body: "World",
+    });
+
+    expect(res.success).toBe(true);
+    expect(res.messageId).toBe("projects/p/messages/msg-v1");
+  });
+
+  test("validates constructor options", () => {
+    expect(() => new FcmV1PushProvider({ projectId: "", accessToken: "tok" })).toThrow();
+    expect(() => new FcmV1PushProvider({ projectId: "p", accessToken: "" })).toThrow();
+  });
+});
+
+describe("FcmPushProvider (legacy)", () => {
   test("sends notification with image + data", async () => {
     let seen: Record<string, unknown> = {};
     const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
@@ -110,6 +248,7 @@ describe("FcmPushProvider", () => {
     expect(body.notification.image).toBe("https://x/img.png");
     expect(body.data).toEqual({ k: "v" });
   });
+
   test("surfaces FCM errors and validates input", async () => {
     const fetchFn = (async () => new Response("err", { status: 401 })) as unknown as typeof fetch;
     const p = new FcmPushProvider("k", fetchFn);
@@ -119,6 +258,7 @@ describe("FcmPushProvider", () => {
     await expect(p.sendPush({ token: " ", title: "Hi", body: "x" })).rejects.toThrow();
     expect(() => new FcmPushProvider("")).toThrow();
   });
+
   test("works through PushChannel", async () => {
     const fetchFn = (async () =>
       new Response(JSON.stringify({ message_id: "fcm-2" }), {
@@ -154,6 +294,7 @@ describe("ApnsPushProvider", () => {
     expect(body.aps.alert.title).toBe("Hi");
     expect(body.aps["mutable-content"]).toBe(1);
   });
+
   test("uses production host when configured, surfaces errors", async () => {
     let url = "";
     const fetchFn = (async (u: string | URL | Request) => {
@@ -171,9 +312,11 @@ describe("ApnsPushProvider", () => {
     );
     expect(url).toContain("api.push.apple.com");
   });
+
   test("validates config", () => {
     expect(() => new ApnsPushProvider({ providerToken: "", bundleId: "b" })).toThrow();
   });
+
   test("rejects tokens with illegal characters", async () => {
     const p = new ApnsPushProvider({ providerToken: "jwt", bundleId: "b" });
     await expect(p.sendPush({ token: "token?param=1", title: "t", body: "b" })).rejects.toThrow(

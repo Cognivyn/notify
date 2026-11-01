@@ -24,8 +24,12 @@ const varsArg = process.argv[3];
 
 if (!to) {
   console.error("Usage: bun --env-file=.env.local examples/test-msg91.ts <to> '<variables-json>'");
-  console.error("Example (preapproved Flow template): bun --env-file=.env.local examples/test-msg91.ts +919876543210 '{\"VAR1\":\"123456\"}'");
-  console.error("Example (route-based SMS): MSG91_SENDER required, pass body as 3rd arg only if not using template");
+  console.error(
+    'Example (preapproved Flow template): bun --env-file=.env.local examples/test-msg91.ts +919876543210 \'{"VAR1":"123456"}\'',
+  );
+  console.error(
+    "Example (route-based SMS): MSG91_SENDER required, pass body as 3rd arg only if not using template",
+  );
   process.exit(1);
 }
 
@@ -34,7 +38,7 @@ if (varsArg) {
   try {
     variables = JSON.parse(varsArg);
   } catch {
-    console.error("variables must be valid JSON (e.g. '{\"VAR1\":\"123456\"}')");
+    console.error('variables must be valid JSON (e.g. \'{"VAR1":"123456"}\')');
     process.exit(1);
   }
 }
