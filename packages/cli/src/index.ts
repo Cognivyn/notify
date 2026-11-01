@@ -18,7 +18,7 @@ function help(): string {
 ${info("notify")} — unified notification CLI
 
 Usage:
-  notify auth setup <channel> --api-key <key> | --client-id <id> --client-secret <secret>
+  notify auth setup <channel> --api-key <key|-> | --client-id <id> --client-secret <secret|->
   notify test <channel> --to <dest> --body <msg> [--title <t>]
   notify config list
   notify config get <key>
@@ -44,6 +44,14 @@ function parseFlags(args: string[]): Record<string, string | boolean> {
     }
   }
   return out;
+}
+
+async function readStdin(): Promise<string> {
+  const chunks: Buffer[] = [];
+  for await (const chunk of process.stdin) {
+    chunks.push(Buffer.from(chunk));
+  }
+  return Buffer.concat(chunks).toString("utf8").trim();
 }
 
 export async function buildService() {
@@ -94,16 +102,20 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
     const channel = rest[0];
     const flags = parseFlags(rest.slice(1));
     if (!channel) {
-      console.error(err("Usage: notify auth setup <channel> --api-key <k>"));
+      console.error(err("Usage: notify auth setup <channel> --api-key <k|->"));
       return 1;
     }
     const store = new SecureStore();
     try {
-      if (flags["api-key"])
-        store.set(`NOTIFY_${channel.toUpperCase()}_API_KEY`, String(flags["api-key"]));
-      else if (flags["client-id"] && flags["client-secret"]) {
-        store.set(`NOTIFY_${channel.toUpperCase()}_CLIENT_ID`, String(flags["client-id"]));
-        store.set(`NOTIFY_${channel.toUpperCase()}_CLIENT_SECRET`, String(flags["client-secret"]));
+      if (flags["api-key"]) {
+        const keyVal = flags["api-key"] === "-" ? await readStdin() : String(flags["api-key"]);
+        store.set(`NOTIFY_${channel.toUpperCase()}_API_KEY`, keyVal);
+      } else if (flags["client-id"] && flags["client-secret"]) {
+        const idVal = String(flags["client-id"]);
+        const secretVal =
+          flags["client-secret"] === "-" ? await readStdin() : String(flags["client-secret"]);
+        store.set(`NOTIFY_${channel.toUpperCase()}_CLIENT_ID`, idVal);
+        store.set(`NOTIFY_${channel.toUpperCase()}_CLIENT_SECRET`, secretVal);
       } else throw new Error("provide --api-key or --client-id + --client-secret");
       console.log(ok(`Auth configured for ${channel} (keys: ${store.listKeys().join(", ")})`));
       return 0;

@@ -1,4 +1,9 @@
-import type { ChannelAdapter, ChannelType, DeliveryResult, NotificationPayload } from "@notify/types";
+import type {
+  ChannelAdapter,
+  ChannelType,
+  DeliveryResult,
+  NotificationPayload,
+} from "@notify/types";
 
 export interface NotifyLogger {
   info(msg: string, meta?: Record<string, unknown>): void;
@@ -32,7 +37,11 @@ export class NotificationService {
   async send(payload: NotificationPayload, opts: SendOptions = {}): Promise<DeliveryResult> {
     const primary = this.adapters.get(payload.channel);
     if (!primary) {
-      return { success: false, channel: payload.channel, error: `No adapter for ${payload.channel}` };
+      return {
+        success: false,
+        channel: payload.channel,
+        error: `No adapter for ${payload.channel}`,
+      };
     }
     try {
       const res = await this.withTimeout(primary.send(payload), opts.timeoutMs ?? 5000);
@@ -45,8 +54,22 @@ export class NotificationService {
     }
   }
 
-  async sendMany(payloads: NotificationPayload[]): Promise<DeliveryResult[]> {
-    return Promise.all(payloads.map((p) => this.send(p)));
+  async sendMany(payloads: NotificationPayload[], concurrency = 10): Promise<DeliveryResult[]> {
+    if (payloads.length === 0) return [];
+    const results: DeliveryResult[] = new Array(payloads.length);
+    const limit = Math.max(1, concurrency);
+    let index = 0;
+
+    const worker = async () => {
+      while (index < payloads.length) {
+        const i = index++;
+        results[i] = await this.send(payloads[i]);
+      }
+    };
+
+    const workers = Array.from({ length: Math.min(limit, payloads.length) }, () => worker());
+    await Promise.all(workers);
+    return results;
   }
 
   private async tryFallbacks(

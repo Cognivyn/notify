@@ -126,5 +126,5 @@ bun run build
 bun run clean
 
 # Run full workspace typecheck
-bun run typecheck
+bun run type-check
 ```

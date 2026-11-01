@@ -7,7 +7,12 @@ export interface PushMessage extends NotificationPayload {
 
 export interface PushProvider {
   readonly name: string;
-  sendPush(msg: { token: string; title: string; body: string; data?: Record<string, unknown> }): Promise<{ messageId: string }>;
+  sendPush(msg: {
+    token: string;
+    title: string;
+    body: string;
+    data?: Record<string, unknown>;
+  }): Promise<{ messageId: string }>;
 }
 
 export class MockPushProvider implements PushProvider {
@@ -22,6 +27,30 @@ export class MockPushProvider implements PushProvider {
 export function validateDeviceToken(token: string): void {
   if (!token?.trim()) throw new Error("device token required");
   if (token.length > 4096) throw new Error("device token too long");
+  if (/[\r\n\0/\\]|\.\./.test(token)) {
+    throw new Error("invalid device token: illegal characters or path traversal detected");
+  }
+}
+
+const BLOCKED_DEEP_LINK_SCHEMES = new Set(["javascript", "data", "vbscript", "file"]);
+
+export function validateDeepLink(link: string): void {
+  const trimmed = link.trim();
+  if (!trimmed) throw new Error("invalid deepLink");
+  if (trimmed.startsWith("//")) {
+    throw new Error("invalid deepLink: protocol-relative URL not allowed");
+  }
+  if (trimmed.startsWith("/")) return;
+
+  const match = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
+  if (!match) throw new Error("invalid deepLink: missing valid URI scheme");
+  const scheme = match[1].toLowerCase();
+  if (BLOCKED_DEEP_LINK_SCHEMES.has(scheme)) {
+    throw new Error(`invalid deepLink: scheme '${scheme}' is not allowed`);
+  }
+  if (!/^[a-z][a-z0-9+.-]*:\/\/.+/i.test(trimmed)) {
+    throw new Error("invalid deepLink: malformed URI");
+  }
 }
 
 /** Firebase Cloud Messaging (legacy HTTP API). Supports title/body/data + image. */
@@ -48,7 +77,11 @@ export class FcmPushProvider implements PushProvider {
       headers: { Authorization: `key=${this.serverKey}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         to: msg.token,
-        notification: { title: msg.title, body: msg.body, ...(msg.imageUrl ? { image: msg.imageUrl } : {}) },
+        notification: {
+          title: msg.title,
+          body: msg.body,
+          ...(msg.imageUrl ? { image: msg.imageUrl } : {}),
+        },
         ...(msg.data ? { data: msg.data } : {}),
       }),
     });
@@ -82,6 +115,9 @@ export class ApnsPushProvider implements PushProvider {
     imageUrl?: string;
   }) {
     validateDeviceToken(msg.token);
+    if (!/^[a-zA-Z0-9._-]+$/.test(msg.token)) {
+      throw new Error("invalid APNs device token: illegal characters");
+    }
     if (!msg.title?.trim()) throw new Error("push title required");
     if (!msg.body?.trim()) throw new Error("push body required");
     const host = this.opts.production ? "api.push.apple.com" : "api.development.push.apple.com";
@@ -127,9 +163,15 @@ export class PushChannel implements ChannelAdapter {
       if (!token) throw new Error("device token / to required");
       const title = msg.title ?? "Notification";
       if (!msg.body?.trim()) throw new Error("push body required");
-      if (msg.deepLink && !/^([a-z][a-z0-9+.-]*:)?\/\//i.test(msg.deepLink) && !msg.deepLink.startsWith("/"))
-        throw new Error("invalid deepLink");
-      const { messageId } = await this.provider.sendPush({ token, title, body: msg.body, data: msg.data });
+      if (msg.deepLink) {
+        validateDeepLink(msg.deepLink);
+      }
+      const { messageId } = await this.provider.sendPush({
+        token,
+        title,
+        body: msg.body,
+        data: msg.data,
+      });
       return { success: true, channel: "push", messageId };
     } catch (e) {
       return { success: false, channel: "push", error: e instanceof Error ? e.message : String(e) };

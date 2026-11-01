@@ -4,7 +4,9 @@ import {
   MockEmailProvider,
   ResendEmailProvider,
   SesEmailProvider,
+  escapeHtml,
   renderTemplate,
+  validateSubject,
 } from "../src/email.js";
 
 const okJson = (data: unknown) =>
@@ -30,9 +32,45 @@ describe("EmailChannel", () => {
     const r = await c.send({ channel: "email", to: "bad", body: "hi" });
     expect(r.success).toBe(false);
   });
+  test("rejects CRLF injection in subject", async () => {
+    const c = new EmailChannel();
+    const r1 = await c.send({
+      channel: "email",
+      to: "user@example.com",
+      title: "Hi\r\nBcc: evil@attacker.com",
+      body: "Hello",
+    });
+    expect(r1.success).toBe(false);
+    expect(r1.error).toContain("Email subject must not contain CRLF characters");
+
+    const r2 = await c.send({
+      channel: "email",
+      to: "user@example.com",
+      title: "Hi\nSubject: Spoofed",
+      body: "Hello",
+    });
+    expect(r2.success).toBe(false);
+    expect(r2.error).toContain("Email subject must not contain CRLF characters");
+  });
   test("template renderer", () => {
     const out = renderTemplate("Hello {{name}}, order {{id}}", { name: "Alice", id: 42 });
     expect(out).toBe("Hello Alice, order 42");
+  });
+  test("template renderer escapes HTML when requested", () => {
+    const out = renderTemplate(
+      "<div>Hello {{name}}</div>",
+      { name: "<script>alert(1)</script>" },
+      { escapeHtml: true },
+    );
+    expect(out).toBe("<div>Hello &lt;script&gt;alert(1)&lt;/script&gt;</div>");
+  });
+  test("escapeHtml escapes special characters", () => {
+    expect(escapeHtml(`& < > " '`)).toBe("&amp; &lt; &gt; &quot; &#39;");
+  });
+  test("validateSubject enforces limits", () => {
+    expect(() => validateSubject("Valid Subject")).not.toThrow();
+    expect(() => validateSubject("Bad\nSubject")).toThrow("CRLF");
+    expect(() => validateSubject("a".repeat(1000))).toThrow("maximum length");
   });
 });
 
@@ -69,6 +107,12 @@ describe("ResendEmailProvider", () => {
   test("validates config and recipients", () => {
     expect(() => new ResendEmailProvider("", "noreply@acme.com")).toThrow();
     expect(() => new ResendEmailProvider("k", "bad")).toThrow();
+  });
+  test("rejects CRLF in subject", async () => {
+    const p = new ResendEmailProvider("k", "noreply@acme.com");
+    await expect(
+      p.sendEmail({ to: "a@b.com", subject: "Bad\r\nSubject", text: "x" }),
+    ).rejects.toThrow("CRLF");
   });
   test("works through EmailChannel with html payload", async () => {
     const fetchFn = (async () => okJson({ id: "re_1" })) as unknown as typeof fetch;

@@ -41,10 +41,14 @@ export class ApiKeyAuth implements AuthProvider {
   }
 
   describe(): string {
-    return `ApiKeyAuth(header=${this.headerName}, key=***${this.apiKey.slice(-4)})`;
+    const masked = this.apiKey.length > 4 ? `***${this.apiKey.slice(-4)}` : "***";
+    return `ApiKeyAuth(header=${this.headerName}, key=${masked})`;
   }
 
-  static fromEnv(env: Record<string, string | undefined> = process.env, key = "NOTIFY_API_KEY"): ApiKeyAuth {
+  static fromEnv(
+    env: Record<string, string | undefined> = process.env,
+    key = "NOTIFY_API_KEY",
+  ): ApiKeyAuth {
     const v = env[key];
     if (!v) throw new AuthError(`Missing env var ${key}`);
     return new ApiKeyAuth(v);

@@ -1,11 +1,25 @@
 import { describe, expect, test } from "bun:test";
-import { ApiKeyAuth, ClientSecretAuth, SecureStore, createAuthProvider, AuthError } from "../src/index.js";
+import {
+  ApiKeyAuth,
+  ClientSecretAuth,
+  SecureStore,
+  createAuthProvider,
+  AuthError,
+} from "../src/index.js";
 
 describe("ApiKeyAuth", () => {
   test("builds bearer header", () => {
     const a = new ApiKeyAuth("secret123");
     expect(a.headers()).toEqual({ Authorization: "Bearer secret123" });
     expect(a.describe()).not.toContain("secret123");
+  });
+  test("masks short keys completely in describe", () => {
+    const shortAuth = new ApiKeyAuth("abc");
+    expect(shortAuth.describe()).toBe("ApiKeyAuth(header=Authorization, key=***)");
+    const fourChar = new ApiKeyAuth("abcd");
+    expect(fourChar.describe()).toBe("ApiKeyAuth(header=Authorization, key=***)");
+    const longer = new ApiKeyAuth("abcdefgh");
+    expect(longer.describe()).toBe("ApiKeyAuth(header=Authorization, key=***efgh)");
   });
   test("rejects empty key", () => {
     expect(() => new ApiKeyAuth("")).toThrow(AuthError);

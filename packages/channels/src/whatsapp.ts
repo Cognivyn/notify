@@ -10,7 +10,11 @@ export interface WhatsAppMessage extends NotificationPayload {
 
 export interface WhatsAppProvider {
   readonly name: string;
-  sendWhatsApp(msg: { to: string; body: string; mediaUrl?: string }): Promise<{ messageId: string }>;
+  sendWhatsApp(msg: {
+    to: string;
+    body: string;
+    mediaUrl?: string;
+  }): Promise<{ messageId: string }>;
 }
 
 export class MockWhatsAppProvider implements WhatsAppProvider {
@@ -29,7 +33,11 @@ export function validateWhatsApp(msg: WhatsAppMessage): void {
   if (!msg.body?.trim() && !msg.template) throw new Error("body or template required");
   const mt = (msg.mediaType ?? "text") as string;
   if (!ALLOWED_MEDIA.has(mt)) throw new Error(`Unsupported media type: ${mt}`);
-  if (msg.mediaUrl && !/^https?:\/\//.test(msg.mediaUrl)) throw new Error("mediaUrl must be http(s)");
+  if (msg.mediaUrl) {
+    if (!/^https?:\/\/[^\s$.?#].[^\s]*$/i.test(msg.mediaUrl) || /[\r\n\0]/.test(msg.mediaUrl)) {
+      throw new Error("mediaUrl must be a valid http(s) URL");
+    }
+  }
 }
 
 export class WhatsAppChannel implements ChannelAdapter {
@@ -39,9 +47,7 @@ export class WhatsAppChannel implements ChannelAdapter {
     try {
       const msg = payload as WhatsAppMessage;
       validateWhatsApp(msg);
-      const body = msg.template
-        ? msg.template.replace("{{body}}", msg.body)
-        : msg.body;
+      const body = msg.template ? msg.template.replaceAll("{{body}}", () => msg.body) : msg.body;
       const { messageId } = await this.provider.sendWhatsApp({
         to: msg.to,
         body,
@@ -49,7 +55,11 @@ export class WhatsAppChannel implements ChannelAdapter {
       });
       return { success: true, channel: "whatsapp", messageId };
     } catch (e) {
-      return { success: false, channel: "whatsapp", error: e instanceof Error ? e.message : String(e) };
+      return {
+        success: false,
+        channel: "whatsapp",
+        error: e instanceof Error ? e.message : String(e),
+      };
     }
   }
 }

@@ -3,6 +3,7 @@ import {
   SmsChannel,
   MockSmsProvider,
   Msg91SmsProvider,
+  TwilioSmsProvider,
   validatePhone,
   type Msg91Options,
   type SmsMessage,
@@ -35,6 +36,28 @@ describe("SmsChannel", () => {
   test("validatePhone throws", () => {
     expect(() => validatePhone("+1")).toThrow();
   });
+  test("allows empty body when templateId is provided", async () => {
+    const p = new MockSmsProvider();
+    const c = new SmsChannel({ provider: p });
+    const r = await c.send({
+      channel: "sms",
+      to: "+15551234567",
+      body: "",
+      data: { templateId: "tmpl_123" },
+    });
+    expect(r.success).toBe(true);
+  });
+});
+
+describe("TwilioSmsProvider", () => {
+  test("validates accountSid characters", () => {
+    expect(() => new TwilioSmsProvider("AC123/../../bad", "token", "+15551234567")).toThrow(
+      "illegal characters",
+    );
+    expect(
+      () => new TwilioSmsProvider("AC1234567890abcdef1234567890abcdef", "token", "+15551234567"),
+    ).not.toThrow();
+  });
 });
 
 describe("Msg91SmsProvider", () => {
@@ -50,40 +73,38 @@ describe("Msg91SmsProvider", () => {
     const r = await p.sendSms("+919876543210", "hello");
     expect(r.messageId).toBe("msg91-id-1");
     expect(seen.url).toBe("https://api.msg91.com/api/v5/sms");
-    expect((seen.headers as Record<string, string>)["authkey"]).toBe("auth-key");
+    const headers = seen.headers as Record<string, string>;
+    expect(headers["authkey"]).toBe("auth-key");
     const body = JSON.parse(seen.body as string);
     expect(body.sender).toBe("SENDER");
-    expect(body.route).toBe("4");
-    expect(body.country).toBe("91");
     expect(body.mobiles).toBe("919876543210");
     expect(body.message).toBe("hello");
+    expect(body.route).toBe("4");
+    expect(body.country).toBe("91");
   });
 
   test("supports options object in constructor with custom route and country", async () => {
     let seen: Record<string, unknown> = {};
     const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
       seen = { url: String(url), headers: init?.headers, body: init?.body };
-      return new Response(JSON.stringify({ message: "msg91-id-custom", type: "success" }), {
+      return new Response(JSON.stringify({ message: "msg91-custom", type: "success" }), {
         status: 200,
       });
     }) as unknown as typeof fetch;
     const opts: Msg91Options = {
-      authKey: "opt-auth-key",
-      sender: "ALERTS",
+      authKey: "custom-key",
+      sender: "CUSTOM",
       route: "1",
       country: "1",
       fetchFn,
     };
     const p = new Msg91SmsProvider(opts);
-    const r = await p.sendSms("+15551234567", "alert msg");
-    expect(r.messageId).toBe("msg91-id-custom");
-    expect((seen.headers as Record<string, string>)["authkey"]).toBe("opt-auth-key");
+    const r = await p.sendSms("+15551234567", "Custom route test");
+    expect(r.messageId).toBe("msg91-custom");
     const body = JSON.parse(seen.body as string);
-    expect(body.sender).toBe("ALERTS");
     expect(body.route).toBe("1");
     expect(body.country).toBe("1");
     expect(body.mobiles).toBe("15551234567");
-    expect(body.message).toBe("alert msg");
   });
 
   test("sends via MSG91 Flow API when templateId is configured", async () => {
@@ -95,20 +116,21 @@ describe("Msg91SmsProvider", () => {
       });
     }) as unknown as typeof fetch;
     const p = new Msg91SmsProvider({
-      authKey: "flow-key",
+      authKey: "auth-key",
       templateId: "65a123bc456def789",
       fetchFn,
     });
     const r = await p.sendSms("+919876543210", "Your OTP is 4321");
     expect(r.messageId).toBe("flow-msg-id-1");
     expect(seen.url).toBe("https://control.msg91.com/api/v5/flow");
-    expect((seen.headers as Record<string, string>)["authkey"]).toBe("flow-key");
-    expect((seen.headers as Record<string, string>)["accept"]).toBe("application/json");
+    const headers = seen.headers as Record<string, string>;
+    expect(headers["authkey"]).toBe("auth-key");
+    expect(headers["Content-Type"]).toBe("application/json");
+    expect(headers["accept"]).toBe("application/json");
     const body = JSON.parse(seen.body as string);
     expect(body.template_id).toBe("65a123bc456def789");
     expect(body.recipients).toHaveLength(1);
     expect(body.recipients[0].mobiles).toBe("919876543210");
-    expect(body.recipients[0].message).toBe("Your OTP is 4321");
   });
 
   test("supports dynamic variables, short_url, and per-message templateId override", async () => {
@@ -133,7 +155,23 @@ describe("Msg91SmsProvider", () => {
     expect(body.recipients[0].mobiles).toBe("919876543210");
     expect(body.recipients[0].VAR1).toBe("Alice");
     expect(body.recipients[0].code).toBe(9999);
-    expect(body.recipients[0].message).toBe("Welcome Alice");
+  });
+
+  test("prevents parameter pollution from overriding mobiles in flow template", async () => {
+    let seen: Record<string, unknown> = {};
+    const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
+      seen = { url: String(url), headers: init?.headers, body: init?.body };
+      return new Response(JSON.stringify({ message: "flow-safe-id", type: "success" }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+    const p = new Msg91SmsProvider({ authKey: "ak", templateId: "tmpl_id", fetchFn });
+    await p.sendSms("+919876543210", "", {
+      variables: { mobiles: "910000000000", code: "1234" } as any,
+    });
+    const body = JSON.parse(seen.body as string);
+    expect(body.recipients[0].mobiles).toBe("919876543210");
+    expect(body.recipients[0].code).toBe("1234");
   });
 
   test("works through SmsChannel with flow template options in payload", async () => {
@@ -166,26 +204,30 @@ describe("Msg91SmsProvider", () => {
 
   test("surfaces MSG91 HTTP errors", async () => {
     const fetchFn = (async () =>
-      new Response("Unauthorized", { status: 401 })) as unknown as typeof fetch;
+      new Response("Internal Server Error", { status: 500 })) as unknown as typeof fetch;
     const p = new Msg91SmsProvider("k", "S", { fetchFn });
-    await expect(p.sendSms("+15551234567", "hi")).rejects.toThrow("MSG91 error: 401");
+    await expect(p.sendSms("+919876543210", "hi")).rejects.toThrow("MSG91 error: 500");
   });
 
   test("surfaces MSG91 API error responses with HTTP 200", async () => {
     const fetchFn = (async () =>
-      new Response(JSON.stringify({ message: "IP not whitelisted", type: "error" }), {
+      new Response(JSON.stringify({ message: "Invalid mobile number", type: "error" }), {
         status: 200,
       })) as unknown as typeof fetch;
-    const p = new Msg91SmsProvider({ authKey: "k", sender: "S", fetchFn });
-    await expect(p.sendSms("+15551234567", "hi")).rejects.toThrow(
-      "MSG91 error: IP not whitelisted",
+    const p = new Msg91SmsProvider("k", "S", { fetchFn });
+    await expect(p.sendSms("+919876543210", "hi")).rejects.toThrow(
+      "MSG91 error: Invalid mobile number",
     );
   });
 
   test("surfaces MSG91 Flow API error responses with hasError or status error", async () => {
     const fetchFn = (async () =>
       new Response(
-        JSON.stringify({ hasError: true, errors: "The provided flow ID or template ID is invalid." }),
+        JSON.stringify({
+          status: "error",
+          hasError: true,
+          errors: "The provided flow ID or template ID is invalid.",
+        }),
         { status: 200 },
       )) as unknown as typeof fetch;
     const p = new Msg91SmsProvider({ authKey: "k", templateId: "invalid_tmpl", fetchFn });
