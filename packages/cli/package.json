@@ -1,6 +1,7 @@
 {
   "name": "@notify/cli",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "CLI for notify",
   "type": "module",
   "main": "./dist/index.js",
@@ -11,7 +12,8 @@
     "notify": "./dist/index.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "exports": {
     ".": {

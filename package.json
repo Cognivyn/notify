@@ -2,6 +2,7 @@
   "name": "@cognivyn/notify",
   "version": "0.1.0",
   "private": true,
+  "license": "MIT",
   "description": "Cognivyn unified notification channel connection system",
   "packageManager": "bun@1.4.3",
   "workspaces": [

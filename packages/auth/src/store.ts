@@ -4,8 +4,6 @@ import { AuthError } from "./providers.js";
  * Secure credential storage.
  * - Memory-first, env fallback.
  * - Never logs secret values (see `describe` / `listKeys`).
- * - File persistence is opt-in and stores only references, never raw secrets,
- *   unless `allowPlaintextFile` is explicitly enabled (dev only).
  */
 export class SecureStore {
   private mem = new Map<string, string>();
