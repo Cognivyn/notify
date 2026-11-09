@@ -1,4 +1,4 @@
-import type { NotificationPayload } from "@notify/types";
+import type { NotificationPayload } from "@cognivyn/types";
 import { NotificationService } from "./service.js";
 
 /** Simple in-memory batching queue. Flush sends all queued items via service. */

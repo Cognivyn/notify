@@ -1,7 +1,7 @@
 # Architecture
 
 ```
-@notify/types → @notify/config, @notify/auth → @notify/core → @notify/channels → @notify/cli
+@cognivyn/types → @cognivyn/config, @cognivyn/auth → @cognivyn/core → @cognivyn/channels → @cognivyn/cli
 ```
 
 - SRP: one class per concern, provider adapters per channel.

@@ -5,7 +5,7 @@ import {
   NotificationQueue,
   notify,
 } from "../src/index.js";
-import type { ChannelAdapter, NotificationPayload } from "@notify/types";
+import type { ChannelAdapter, NotificationPayload } from "@cognivyn/types";
 
 function mockAdapter(channel: "sms" | "email" | "whatsapp" | "push", ok = true): ChannelAdapter {
   return {

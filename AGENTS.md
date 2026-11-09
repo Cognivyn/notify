@@ -16,7 +16,7 @@ This document is the authoritative specification and operating guide for AI agen
    - **Channels** (`SmsChannel`, `EmailChannel`, `WhatsAppChannel`, `PushChannel`) handle validation, retry policy, and payload normalization.
    - **Providers** (`TwilioSmsProvider`, `WhatsAppCloudApiProvider`, `FcmV1PushProvider`, `ResendEmailProvider`, etc.) handle raw HTTP wire transmission, signing, and vendor error parsing.
    - **Core** (`NotificationService`, `NotificationBuilder`, `NotificationQueue`) coordinates channels, fallback strategies, batching, and throttling.
-4. **Tree-Shakable Subpath Exports**: Every package specifies `sideEffects: false` and exports explicit granular subpaths (e.g., `@notify/channels/sms`, `@notify/channels/whatsapp`, `@notify/core/service`).
+4. **Tree-Shakable Subpath Exports**: Every package specifies `sideEffects: false` and exports explicit granular subpaths (e.g., `@cognivyn/channels/sms`, `@cognivyn/channels/whatsapp`, `@cognivyn/core/service`).
 5. **Injectable `fetchFn`**: All provider classes MUST accept an optional `fetchFn: typeof fetch` in constructor options to allow 100% offline, deterministic unit testing without mocking global network interfaces.
 
 ---
@@ -25,16 +25,16 @@ This document is the authoritative specification and operating guide for AI agen
 
 ```text
 packages/
-├── types/         # @notify/types: ChannelType, NotificationPayload, DeliveryResult, ChannelAdapter
-├── config/        # @notify/config: ConfigManager key/value runtime storage
-├── auth/          # @notify/auth: ApiKeyAuth, ClientSecretAuth, SecureStore
-├── core/          # @notify/core: NotificationService, NotificationBuilder, NotificationQueue
-├── channels/      # @notify/channels: Multi-provider channel adapters
+├── types/         # @cognivyn/types: ChannelType, NotificationPayload, DeliveryResult, ChannelAdapter
+├── config/        # @cognivyn/config: ConfigManager key/value runtime storage
+├── auth/          # @cognivyn/auth: ApiKeyAuth, ClientSecretAuth, SecureStore
+├── core/          # @cognivyn/core: NotificationService, NotificationBuilder, NotificationQueue
+├── channels/      # @cognivyn/channels: Multi-provider channel adapters
 │   ├── sms.ts       -> Twilio, MSG91 (Flow API v5 + route SMS)
 │   ├── email.ts     -> Resend, AWS SESv2 (SigV4 stdlib crypto)
 │   ├── whatsapp.ts  -> Meta WhatsApp Cloud API v21.0+, Twilio WhatsApp
 │   └── push.ts      -> FCM HTTP v1 (OAuth2 Bearer), FCM Legacy, Apple APNs (ES256)
-└── cli/           # @notify/cli: `notify` terminal tool (auth, test, config, providers)
+└── cli/           # @cognivyn/cli: `notify` terminal tool (auth, test, config, providers)
 ```
 
 ---
@@ -57,7 +57,7 @@ Run all commands using `bun`:
 
 ## 4. Supported Channels & Provider APIs
 
-### A. SMS Channel (`@notify/channels/sms`)
+### A. SMS Channel (`@cognivyn/channels/sms`)
 
 - **Twilio** (`TwilioSmsProvider`):
   - Endpoint: `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`
@@ -69,7 +69,7 @@ Run all commands using `bun`:
   - Authentication: `authkey` header.
   - Parameter pollution protection on mobile numbers.
 
-### B. Email Channel (`@notify/channels/email`)
+### B. Email Channel (`@cognivyn/channels/email`)
 
 - **Resend** (`ResendEmailProvider`):
   - Endpoint: `https://api.resend.com/emails`
@@ -80,7 +80,7 @@ Run all commands using `bun`:
   - Authentication: AWS Signature Version 4 (`signSesV4`) using native `node:crypto`. Zero AWS SDK dependencies.
   - Features: `ToAddresses`, `CcAddresses`, `BccAddresses`, `ReplyToAddresses`, `EmailTags`.
 
-### C. WhatsApp Channel (`@notify/channels/whatsapp`)
+### C. WhatsApp Channel (`@cognivyn/channels/whatsapp`)
 
 - **Meta WhatsApp Cloud API** (`WhatsAppCloudApiProvider`):
   - Endpoint: `https://graph.facebook.com/${apiVersion}/${phoneNumberId}/messages` (default `v21.0`)
@@ -91,7 +91,7 @@ Run all commands using `bun`:
   - Authentication: HTTP Basic auth.
   - Features: Auto-prefixing `whatsapp:` to destination and sender, media via `MediaUrl`.
 
-### D. Push Channel (`@notify/channels/push`)
+### D. Push Channel (`@cognivyn/channels/push`)
 
 - **FCM HTTP v1** (`FcmV1PushProvider`):
   - Endpoint: `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`

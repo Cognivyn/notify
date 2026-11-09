@@ -1,4 +1,4 @@
-import type { ChannelAdapter, DeliveryResult, NotificationPayload } from "@notify/types";
+import type { ChannelAdapter, DeliveryResult, NotificationPayload } from "@cognivyn/types";
 import { createHash, createHmac } from "node:crypto";
 
 export interface EmailAttachment {

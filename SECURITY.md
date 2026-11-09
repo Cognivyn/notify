@@ -14,7 +14,7 @@ Please report privately via [GitHub security advisories](https://github.com/Cogn
 
 Include as much of the following as possible:
 
-- Affected package(s) (`@notify/*` or `@cognivyn/notify`) and version
+- Affected package(s) (`@cognivyn/*` or `@cognivyn/notify`) and version
 - Reproduction steps or a proof of concept
 - Impact assessment
 

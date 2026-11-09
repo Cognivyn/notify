@@ -3,7 +3,7 @@ import type {
   ChannelType,
   DeliveryResult,
   NotificationPayload,
-} from "@notify/types";
+} from "@cognivyn/types";
 
 export interface NotifyLogger {
   info(msg: string, meta?: Record<string, unknown>): void;

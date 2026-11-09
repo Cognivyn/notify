@@ -9,7 +9,7 @@ The Email channel provides multi-provider transactional email delivery through t
 High-deliverability developer email platform. Supports HTML templates, CC, BCC, Reply-To, custom tags, and file attachments.
 
 ```ts
-import { EmailChannel, ResendEmailProvider, renderTemplate } from "@notify/channels/email";
+import { EmailChannel, ResendEmailProvider, renderTemplate } from "@cognivyn/channels/email";
 
 const channel = new EmailChannel({
   provider: new ResendEmailProvider(process.env.RESEND_API_KEY!, "noreply@acme.com"),
@@ -42,7 +42,7 @@ await channel.send({
 Direct AWS Simple Email Service v2 delivery. Implements RFC-compliant AWS Signature Version 4 authentication using Node.js built-in crypto without requiring the heavy `@aws-sdk/client-sesv2`.
 
 ```ts
-import { EmailChannel, SesEmailProvider } from "@notify/channels/email";
+import { EmailChannel, SesEmailProvider } from "@cognivyn/channels/email";
 
 const channel = new EmailChannel({
   provider: new SesEmailProvider({

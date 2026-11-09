@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { NotificationService } from "@notify/core";
-import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@notify/channels";
+import { NotificationService } from "@cognivyn/core";
+import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@cognivyn/channels";
 
 function fullService() {
   return new NotificationService()

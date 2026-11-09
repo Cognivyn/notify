@@ -4,32 +4,32 @@ import {
   MockSmsProvider,
   TwilioSmsProvider,
   Msg91SmsProvider,
-} from "@notify/channels/sms";
+} from "@cognivyn/channels/sms";
 import {
   EmailChannel,
   MockEmailProvider,
   ResendEmailProvider,
   SesEmailProvider,
-} from "@notify/channels/email";
+} from "@cognivyn/channels/email";
 import {
   WhatsAppChannel,
   MockWhatsAppProvider,
   WhatsAppCloudApiProvider,
   TwilioWhatsAppProvider,
-} from "@notify/channels/whatsapp";
+} from "@cognivyn/channels/whatsapp";
 import {
   PushChannel,
   MockPushProvider,
   FcmV1PushProvider,
   FcmPushProvider,
   ApnsPushProvider,
-} from "@notify/channels/push";
-import { NotificationService } from "@notify/core/service";
-import { NotificationBuilder } from "@notify/core/builder";
-import { NotificationQueue } from "@notify/core/queue";
-import { ApiKeyAuth, ClientSecretAuth } from "@notify/auth/providers";
-import { SecureStore } from "@notify/auth/store";
-import { ConfigManager } from "@notify/config/manager";
+} from "@cognivyn/channels/push";
+import { NotificationService } from "@cognivyn/core/service";
+import { NotificationBuilder } from "@cognivyn/core/builder";
+import { NotificationQueue } from "@cognivyn/core/queue";
+import { ApiKeyAuth, ClientSecretAuth } from "@cognivyn/auth/providers";
+import { SecureStore } from "@cognivyn/auth/store";
+import { ConfigManager } from "@cognivyn/config/manager";
 
 describe("tree-shakable subpath imports", () => {
   test("imports individual channel subpaths without root barrel", async () => {

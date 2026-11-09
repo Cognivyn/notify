@@ -1,4 +1,4 @@
-import type { ChannelType, NotificationPayload } from "@notify/types";
+import type { ChannelType, NotificationPayload } from "@cognivyn/types";
 
 /** Type-safe notification builder. */
 export class NotificationBuilder {

@@ -9,7 +9,7 @@ The Push channel delivers mobile and web push notifications through the `PushPro
 Google's modern FCM HTTP v1 protocol (`https://fcm.googleapis.com/v1/projects/{projectId}/messages:send`). Uses OAuth 2.0 Bearer tokens (static token or async token provider function).
 
 ```ts
-import { PushChannel, FcmV1PushProvider } from "@notify/channels/push";
+import { PushChannel, FcmV1PushProvider } from "@cognivyn/channels/push";
 
 const channel = new PushChannel({
   provider: new FcmV1PushProvider({
@@ -39,7 +39,7 @@ await channel.send({
 Direct HTTP/2 push notification delivery to iOS and macOS devices using an Apple Developer ES256 provider JWT token.
 
 ```ts
-import { PushChannel, ApnsPushProvider } from "@notify/channels/push";
+import { PushChannel, ApnsPushProvider } from "@cognivyn/channels/push";
 
 const channel = new PushChannel({
   provider: new ApnsPushProvider({

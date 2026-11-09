@@ -14,55 +14,55 @@ Cognivyn Notify is built as a fully tree-shakable, modular library designed for 
 
 ## Recommended Import Patterns
 
-### 1. Channel Subpaths (`@notify/channels`)
+### 1. Channel Subpaths (`@cognivyn/channels`)
 
-Instead of importing from the barrel export `@notify/channels` (which references all channel implementations), import only the channel you need:
+Instead of importing from the barrel export `@cognivyn/channels` (which references all channel implementations), import only the channel you need:
 
 ```ts
 // ✅ Optimal: Bundler imports ONLY SMS providers (Twilio, MSG91, Mock)
-import { SmsChannel, Msg91SmsProvider, TwilioSmsProvider } from "@notify/channels/sms";
+import { SmsChannel, Msg91SmsProvider, TwilioSmsProvider } from "@cognivyn/channels/sms";
 
 // ✅ Optimal: Bundler imports ONLY Email providers (Resend, SES, Mock)
-import { EmailChannel, ResendEmailProvider, SesEmailProvider } from "@notify/channels/email";
+import { EmailChannel, ResendEmailProvider, SesEmailProvider } from "@cognivyn/channels/email";
 
 // ✅ Optimal: Bundler imports ONLY WhatsApp adapter
-import { WhatsAppChannel } from "@notify/channels/whatsapp";
+import { WhatsAppChannel } from "@cognivyn/channels/whatsapp";
 
 // ✅ Optimal: Bundler imports ONLY Push notification providers (FCM, APNs, Mock)
-import { PushChannel, FcmPushProvider, ApnsPushProvider } from "@notify/channels/push";
+import { PushChannel, FcmPushProvider, ApnsPushProvider } from "@cognivyn/channels/push";
 ```
 
 You can still use the root package export if you utilize all channels:
 
 ```ts
 // Full suite
-import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@notify/channels";
+import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@cognivyn/channels";
 ```
 
-### 2. Core Subpaths (`@notify/core`)
+### 2. Core Subpaths (`@cognivyn/core`)
 
 ```ts
 // Only NotificationService
-import { NotificationService } from "@notify/core/service";
+import { NotificationService } from "@cognivyn/core/service";
 
 // Only type-safe NotificationBuilder
-import { NotificationBuilder } from "@notify/core/builder";
+import { NotificationBuilder } from "@cognivyn/core/builder";
 
 // Only NotificationQueue
-import { NotificationQueue } from "@notify/core/queue";
+import { NotificationQueue } from "@cognivyn/core/queue";
 ```
 
 ### 3. Auth & Config Subpaths
 
 ```ts
 // Only Auth providers (ApiKeyAuth, ClientSecretAuth, etc.)
-import { ApiKeyAuth, ClientSecretAuth, createAuthProvider } from "@notify/auth/providers";
+import { ApiKeyAuth, ClientSecretAuth, createAuthProvider } from "@cognivyn/auth/providers";
 
 // Only SecureStore (credential storage)
-import { SecureStore } from "@notify/auth/store";
+import { SecureStore } from "@cognivyn/auth/store";
 
 // Only ConfigManager
-import { ConfigManager } from "@notify/config/manager";
+import { ConfigManager } from "@cognivyn/config/manager";
 ```
 
 ---
@@ -73,7 +73,7 @@ Each package follows this modern npm exports standard:
 
 ```json
 {
-  "name": "@notify/channels",
+  "name": "@cognivyn/channels",
   "version": "0.1.0",
   "type": "module",
   "main": "./dist/index.js",

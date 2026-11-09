@@ -16,15 +16,15 @@
     "types": ["bun-types", "bun", "node"],
     "baseUrl": ".",
     "paths": {
-      "@notify/types": ["./packages/types/src/index.ts"],
-      "@notify/config": ["./packages/config/src/index.ts"],
-      "@notify/config/*": ["./packages/config/src/*.ts"],
-      "@notify/auth": ["./packages/auth/src/index.ts"],
-      "@notify/auth/*": ["./packages/auth/src/*.ts"],
-      "@notify/core": ["./packages/core/src/index.ts"],
-      "@notify/core/*": ["./packages/core/src/*.ts"],
-      "@notify/channels": ["./packages/channels/src/index.ts"],
-      "@notify/channels/*": ["./packages/channels/src/*.ts"]
+      "@cognivyn/types": ["./packages/types/src/index.ts"],
+      "@cognivyn/config": ["./packages/config/src/index.ts"],
+      "@cognivyn/config/*": ["./packages/config/src/*.ts"],
+      "@cognivyn/auth": ["./packages/auth/src/index.ts"],
+      "@cognivyn/auth/*": ["./packages/auth/src/*.ts"],
+      "@cognivyn/core": ["./packages/core/src/index.ts"],
+      "@cognivyn/core/*": ["./packages/core/src/*.ts"],
+      "@cognivyn/channels": ["./packages/channels/src/index.ts"],
+      "@cognivyn/channels/*": ["./packages/channels/src/*.ts"]
     }
   }
 }
