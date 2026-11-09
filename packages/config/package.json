@@ -1,6 +1,7 @@
 {
   "name": "@notify/config",
   "version": "0.1.0",
+  "license": "MIT",
   "description": "Configuration management for notify",
   "type": "module",
   "main": "./dist/index.js",
@@ -8,7 +9,8 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist"
+    "dist",
+    "LICENSE"
   ],
   "exports": {
     ".": {

@@ -52,3 +52,11 @@ Examples in `examples/basic.ts`.
 - [x] CLI fully operational with multi-channel testing and auth config
 - [x] Comprehensive documentation and AI Agent ready (`AGENTS.md`, `CLAUDE.md`)
 - [x] Zero unnecessary third-party dependencies, minimal deps, Bun 1.4+ & Turbo
+
+## Trademark Notice
+
+Cognivyn is not affiliated with, endorsed by, or sponsored by Twilio, Meta, Google, Amazon, Resend, or MSG91. All provider trademarks belong to their respective owners. This library implements their public APIs independently.
+
+## License
+
+[MIT](LICENSE) — © 2026 Cognivyn

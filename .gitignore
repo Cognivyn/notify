@@ -4,9 +4,12 @@ build/
 .turbo/
 *.log
 .DS_Store
-.env
-.env.local
+.env*
+!.env.example
 coverage/
 bun.lockb
 .agents/
+.claude/
+.kilo/
+.opencode/
 skills-lock.json
