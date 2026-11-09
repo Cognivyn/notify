@@ -1,5 +1,5 @@
 {
-  "name": "@notify/types",
+  "name": "@cognivyn/types",
   "version": "0.1.0",
   "license": "MIT",
   "description": "Shared TypeScript types for notify",
@@ -10,8 +10,12 @@
   "sideEffects": false,
   "files": [
     "dist",
+    "src",
     "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",

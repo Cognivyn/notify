@@ -5,7 +5,7 @@ The SMS channel provides multi-provider SMS delivery through the `SmsProvider` a
 ## Quick start
 
 ```ts
-import { SmsChannel, TwilioSmsProvider } from "@notify/channels";
+import { SmsChannel, TwilioSmsProvider } from "@cognivyn/channels";
 
 const channel = new SmsChannel({
   provider: new TwilioSmsProvider(
@@ -26,7 +26,7 @@ MSG91 provides SMS delivery for India and global destinations. Supports both the
 Use this for transactional templates, OTPs, and Indian DLT compliance where a registered template ID is required.
 
 ```ts
-import { SmsChannel, Msg91SmsProvider, type SmsMessage } from "@notify/channels/sms";
+import { SmsChannel, Msg91SmsProvider, type SmsMessage } from "@cognivyn/channels/sms";
 
 const msg91 = new SmsChannel({
   provider: new Msg91SmsProvider({
@@ -51,7 +51,7 @@ await msg91.send(message);
 #### Route-Based SMS Fallback
 
 ```ts
-import { SmsChannel, Msg91SmsProvider } from "@notify/channels/sms";
+import { SmsChannel, Msg91SmsProvider } from "@cognivyn/channels/sms";
 
 const msg91 = new SmsChannel({
   provider: new Msg91SmsProvider({

@@ -4,6 +4,13 @@
   "workspaces": {
     "": {
       "name": "@cognivyn/notify",
+      "dependencies": {
+        "@cognivyn/auth": "workspace:*",
+        "@cognivyn/channels": "workspace:*",
+        "@cognivyn/config": "workspace:*",
+        "@cognivyn/core": "workspace:*",
+        "@cognivyn/types": "workspace:*",
+      },
       "devDependencies": {
         "@types/bun": "^1.4.2",
         "@types/node": "^26.6.4",
@@ -15,51 +22,51 @@
       },
     },
     "packages/auth": {
-      "name": "@notify/auth",
+      "name": "@cognivyn/auth",
       "version": "0.1.0",
       "dependencies": {
-        "@notify/types": "workspace:*",
+        "@cognivyn/types": "workspace:*",
       },
     },
     "packages/channels": {
-      "name": "@notify/channels",
+      "name": "@cognivyn/channels",
       "version": "0.1.0",
       "dependencies": {
-        "@notify/config": "workspace:*",
-        "@notify/types": "workspace:*",
+        "@cognivyn/config": "workspace:*",
+        "@cognivyn/types": "workspace:*",
       },
     },
     "packages/cli": {
-      "name": "@notify/cli",
+      "name": "@cognivyn/cli",
       "version": "0.1.0",
       "bin": {
         "notify": "./dist/index.js",
       },
       "dependencies": {
-        "@notify/auth": "workspace:*",
-        "@notify/channels": "workspace:*",
-        "@notify/config": "workspace:*",
-        "@notify/core": "workspace:*",
-        "@notify/types": "workspace:*",
+        "@cognivyn/auth": "workspace:*",
+        "@cognivyn/channels": "workspace:*",
+        "@cognivyn/config": "workspace:*",
+        "@cognivyn/core": "workspace:*",
+        "@cognivyn/types": "workspace:*",
       },
     },
     "packages/config": {
-      "name": "@notify/config",
+      "name": "@cognivyn/config",
       "version": "0.1.0",
       "dependencies": {
-        "@notify/types": "workspace:*",
+        "@cognivyn/types": "workspace:*",
       },
     },
     "packages/core": {
-      "name": "@notify/core",
+      "name": "@cognivyn/core",
       "version": "0.1.0",
       "dependencies": {
-        "@notify/config": "workspace:*",
-        "@notify/types": "workspace:*",
+        "@cognivyn/config": "workspace:*",
+        "@cognivyn/types": "workspace:*",
       },
     },
     "packages/types": {
-      "name": "@notify/types",
+      "name": "@cognivyn/types",
       "version": "0.1.0",
       "devDependencies": {
         "typescript": "^5.6.3",
@@ -67,6 +74,18 @@
     },
   },
   "packages": {
+    "@cognivyn/auth": ["@cognivyn/auth@workspace:packages/auth"],
+
+    "@cognivyn/channels": ["@cognivyn/channels@workspace:packages/channels"],
+
+    "@cognivyn/cli": ["@cognivyn/cli@workspace:packages/cli"],
+
+    "@cognivyn/config": ["@cognivyn/config@workspace:packages/config"],
+
+    "@cognivyn/core": ["@cognivyn/core@workspace:packages/core"],
+
+    "@cognivyn/types": ["@cognivyn/types@workspace:packages/types"],
+
     "@eslint-community/eslint-utils": ["@eslint-community/eslint-utils@4.10.1", "", { "dependencies": { "eslint-visitor-keys": "^3.4.3" }, "peerDependencies": { "eslint": "^6.0.0 || ^7.0.0 || >=8.0.0" } }, "sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg=="],
 
     "@eslint-community/regexpp": ["@eslint-community/regexpp@4.12.2", "", {}, "sha512-EriSTlt5OC9/7SXkRSCAhfSxxoSUgBm33OH+IkwbdpgoqsSsUg7y3uh+IICI/Qg4BBWr3U2i39RpmycbxMq4ew=="],
@@ -94,18 +113,6 @@
     "@humanwhocodes/module-importer": ["@humanwhocodes/module-importer@1.0.1", "", {}, "sha512-bxveV4V8v5Yb4ncFTT3rPSgZBOpCkjfK0y4oVVVJwIuDVBRMDXrPyXRL988i5ap9m9bnyEEjWfm5WkBmtffLfA=="],
 
     "@humanwhocodes/retry": ["@humanwhocodes/retry@0.4.3", "", {}, "sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ=="],
-
-    "@notify/auth": ["@notify/auth@workspace:packages/auth"],
-
-    "@notify/channels": ["@notify/channels@workspace:packages/channels"],
-
-    "@notify/cli": ["@notify/cli@workspace:packages/cli"],
-
-    "@notify/config": ["@notify/config@workspace:packages/config"],
-
-    "@notify/core": ["@notify/core@workspace:packages/core"],
-
-    "@notify/types": ["@notify/types@workspace:packages/types"],
 
     "@turbo/darwin-64": ["@turbo/darwin-64@2.11.7", "", { "os": "darwin", "cpu": "x64" }, "sha512-Z2LFOxwbiJueD1miByXJS/BrW21vv6YaQXZustty5jEX4vQYw6zyh101Sz1QO7WG0mqBzKagZ/DoAeeujI0/Sw=="],
 

@@ -1,4 +1,4 @@
-import type { ChannelAdapter, DeliveryResult, NotificationPayload } from "@notify/types";
+import type { ChannelAdapter, DeliveryResult, NotificationPayload } from "@cognivyn/types";
 
 export type WhatsAppMediaType = "image" | "document" | "audio" | "video" | "text";
 

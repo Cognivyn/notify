@@ -1,5 +1,5 @@
 {
-  "name": "@notify/channels",
+  "name": "@cognivyn/channels",
   "version": "0.1.0",
   "license": "MIT",
   "description": "Channel implementations (sms, email, whatsapp, push)",
@@ -10,6 +10,7 @@
   "sideEffects": false,
   "files": [
     "dist",
+    "src",
     "LICENSE"
   ],
   "exports": {
@@ -45,9 +46,12 @@
     },
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@notify/types": "workspace:*",
-    "@notify/config": "workspace:*"
+    "@cognivyn/types": "workspace:*",
+    "@cognivyn/config": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

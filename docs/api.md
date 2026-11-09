@@ -7,15 +7,15 @@
 
 ## Tree-Shakable Entrypoints
 
-- `@notify/channels/sms` — `SmsChannel`, `TwilioSmsProvider`, `Msg91SmsProvider`, `MockSmsProvider`
-- `@notify/channels/email` — `EmailChannel`, `ResendEmailProvider`, `SesEmailProvider`, `MockEmailProvider`
-- `@notify/channels/whatsapp` — `WhatsAppChannel`
-- `@notify/channels/push` — `PushChannel`, `FcmPushProvider`, `ApnsPushProvider`
-- `@notify/core/service` — `NotificationService`
-- `@notify/core/builder` — `NotificationBuilder`
-- `@notify/core/queue` — `NotificationQueue`
-- `@notify/auth/providers` — `ApiKeyAuth`, `ClientSecretAuth`, `createAuthProvider`
-- `@notify/auth/store` — `SecureStore`
-- `@notify/config/manager` — `ConfigManager`
+- `@cognivyn/channels/sms` — `SmsChannel`, `TwilioSmsProvider`, `Msg91SmsProvider`, `MockSmsProvider`
+- `@cognivyn/channels/email` — `EmailChannel`, `ResendEmailProvider`, `SesEmailProvider`, `MockEmailProvider`
+- `@cognivyn/channels/whatsapp` — `WhatsAppChannel`
+- `@cognivyn/channels/push` — `PushChannel`, `FcmPushProvider`, `ApnsPushProvider`
+- `@cognivyn/core/service` — `NotificationService`
+- `@cognivyn/core/builder` — `NotificationBuilder`
+- `@cognivyn/core/queue` — `NotificationQueue`
+- `@cognivyn/auth/providers` — `ApiKeyAuth`, `ClientSecretAuth`, `createAuthProvider`
+- `@cognivyn/auth/store` — `SecureStore`
+- `@cognivyn/config/manager` — `ConfigManager`
 
 See [docs/tree-shaking.md](./tree-shaking.md) for full guide.

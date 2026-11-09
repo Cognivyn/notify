@@ -1,5 +1,5 @@
 {
-  "name": "@notify/cli",
+  "name": "@cognivyn/cli",
   "version": "0.1.0",
   "license": "MIT",
   "description": "CLI for notify",
@@ -13,6 +13,7 @@
   },
   "files": [
     "dist",
+    "src",
     "LICENSE"
   ],
   "exports": {
@@ -24,12 +25,15 @@
     },
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@notify/types": "workspace:*",
-    "@notify/config": "workspace:*",
-    "@notify/auth": "workspace:*",
-    "@notify/core": "workspace:*",
-    "@notify/channels": "workspace:*"
+    "@cognivyn/types": "workspace:*",
+    "@cognivyn/config": "workspace:*",
+    "@cognivyn/auth": "workspace:*",
+    "@cognivyn/core": "workspace:*",
+    "@cognivyn/channels": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

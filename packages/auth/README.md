@@ -1,9 +1,9 @@
-# @notify/auth
+# @cognivyn/auth
 
 Flexible, secure authentication for all channels.
 
 ```ts
-import { ApiKeyAuth, ClientSecretAuth, SecureStore } from "@notify/auth";
+import { ApiKeyAuth, ClientSecretAuth, SecureStore } from "@cognivyn/auth";
 
 const api = new ApiKeyAuth(process.env["NOTIFY_API_KEY"]!);
 const oauth = ClientSecretAuth.fromEnv();

@@ -13,7 +13,7 @@ import {
   WhatsAppChannel,
   WhatsAppCloudApiProvider,
   type WhatsAppMessage,
-} from "@notify/channels/whatsapp";
+} from "@cognivyn/channels/whatsapp";
 
 const channel = new WhatsAppChannel({
   provider: new WhatsAppCloudApiProvider({
@@ -62,7 +62,7 @@ await channel.send({
 Twilio Programmable Messaging API for WhatsApp. Automatically handles the `whatsapp:` URI prefix for both `To` and `From` numbers and HTTP Basic auth.
 
 ```ts
-import { WhatsAppChannel, TwilioWhatsAppProvider } from "@notify/channels/whatsapp";
+import { WhatsAppChannel, TwilioWhatsAppProvider } from "@cognivyn/channels/whatsapp";
 
 const channel = new WhatsAppChannel({
   provider: new TwilioWhatsAppProvider({
@@ -84,7 +84,7 @@ await channel.send({
 ### 3. Mock Provider (Testing & Development)
 
 ```ts
-import { WhatsAppChannel, MockWhatsAppProvider } from "@notify/channels/whatsapp";
+import { WhatsAppChannel, MockWhatsAppProvider } from "@cognivyn/channels/whatsapp";
 
 const channel = new WhatsAppChannel(new MockWhatsAppProvider());
 await channel.send({

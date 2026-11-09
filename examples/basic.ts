@@ -1,5 +1,5 @@
-import { NotificationService } from "@notify/core";
-import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@notify/channels";
+import { NotificationService } from "@cognivyn/core";
+import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@cognivyn/channels";
 
 const svc = new NotificationService()
   .register(new SmsChannel())

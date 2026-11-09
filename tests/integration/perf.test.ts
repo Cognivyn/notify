@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { NotificationService } from "@notify/core";
-import { SmsChannel } from "@notify/channels";
+import { NotificationService } from "@cognivyn/core";
+import { SmsChannel } from "@cognivyn/channels";
 
 describe("perf benchmarks", () => {
   test("100 sms sends < 2s", async () => {

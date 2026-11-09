@@ -14,8 +14,8 @@ import {
   PushChannel,
   FcmV1PushProvider,
   ApnsPushProvider,
-} from "@notify/channels";
-import { NotificationService } from "@notify/core";
+} from "@cognivyn/channels";
+import { NotificationService } from "@cognivyn/core";
 
 // 1. SMS Channel (Twilio or MSG91 Flow API)
 const sms = new SmsChannel({

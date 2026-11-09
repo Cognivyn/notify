@@ -15,27 +15,27 @@ bun run ./packages/cli/dist/index.js test sms --to +15551234567 --body "hello"
 
 ## Packages
 
-- `@notify/types` — shared types
-- `@notify/config` — configuration (`@notify/config`, `@notify/config/manager`)
-- `@notify/auth` — ApiKey + ClientSecret, SecureStore (`@notify/auth`, `@notify/auth/providers`, `@notify/auth/store`)
-- `@notify/core` — NotificationService, Builder, Queue (`@notify/core`, `@notify/core/service`, `@notify/core/builder`, `@notify/core/queue`)
-- `@notify/channels` — tree-shakable subpaths for channels:
-  - `@notify/channels/sms` (Twilio, MSG91 Flow API v5 + Route SMS)
-  - `@notify/channels/email` (Resend, AWS SESv2 SigV4)
-  - `@notify/channels/whatsapp` (Meta WhatsApp Cloud API v21.0+, Twilio WhatsApp)
-  - `@notify/channels/push` (FCM HTTP v1, FCM Legacy, Apple APNs)
-- `@notify/cli` — `notify auth/test/config/providers`
+- `@cognivyn/types` — shared types
+- `@cognivyn/config` — configuration (`@cognivyn/config`, `@cognivyn/config/manager`)
+- `@cognivyn/auth` — ApiKey + ClientSecret, SecureStore (`@cognivyn/auth`, `@cognivyn/auth/providers`, `@cognivyn/auth/store`)
+- `@cognivyn/core` — NotificationService, Builder, Queue (`@cognivyn/core`, `@cognivyn/core/service`, `@cognivyn/core/builder`, `@cognivyn/core/queue`)
+- `@cognivyn/channels` — tree-shakable subpaths for channels:
+  - `@cognivyn/channels/sms` (Twilio, MSG91 Flow API v5 + Route SMS)
+  - `@cognivyn/channels/email` (Resend, AWS SESv2 SigV4)
+  - `@cognivyn/channels/whatsapp` (Meta WhatsApp Cloud API v21.0+, Twilio WhatsApp)
+  - `@cognivyn/channels/push` (FCM HTTP v1, FCM Legacy, Apple APNs)
+- `@cognivyn/cli` — `notify auth/test/config/providers`
 
 ## Tree-Shaking & Subpath Imports
 
 All packages declare `sideEffects: false` and explicit `exports` maps. Consumers can import individual features without dragging in unused channels or dependencies:
 
 ```ts
-import { SmsChannel, Msg91SmsProvider } from "@notify/channels/sms";
-import { WhatsAppChannel, WhatsAppCloudApiProvider } from "@notify/channels/whatsapp";
-import { PushChannel, FcmV1PushProvider } from "@notify/channels/push";
-import { EmailChannel, ResendEmailProvider } from "@notify/channels/email";
-import { NotificationService } from "@notify/core/service";
+import { SmsChannel, Msg91SmsProvider } from "@cognivyn/channels/sms";
+import { WhatsAppChannel, WhatsAppCloudApiProvider } from "@cognivyn/channels/whatsapp";
+import { PushChannel, FcmV1PushProvider } from "@cognivyn/channels/push";
+import { EmailChannel, ResendEmailProvider } from "@cognivyn/channels/email";
+import { NotificationService } from "@cognivyn/core/service";
 ```
 
 See [docs/tree-shaking.md](docs/tree-shaking.md) for full details.

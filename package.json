@@ -1,15 +1,36 @@
 {
   "name": "@cognivyn/notify",
   "version": "0.1.0",
-  "private": true,
   "license": "MIT",
   "description": "Cognivyn unified notification channel connection system",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "bun": "./src/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "packageManager": "bun@1.4.3",
   "workspaces": [
     "packages/*"
   ],
   "scripts": {
     "build": "turbo run build",
+    "prepublishOnly": "tsc -p tsconfig.build.json",
     "dev": "turbo run dev",
     "test": "bun test ./packages/...",
     "test:coverage": "bun test --coverage ./packages/...",
@@ -27,6 +48,13 @@
     "prettier": "^3.3.3",
     "turbo": "^2.5.4",
     "typescript": "^5.6.3"
+  },
+  "dependencies": {
+    "@cognivyn/types": "workspace:*",
+    "@cognivyn/config": "workspace:*",
+    "@cognivyn/auth": "workspace:*",
+    "@cognivyn/core": "workspace:*",
+    "@cognivyn/channels": "workspace:*"
   },
   "engines": {
     "bun": ">=1.4.3"

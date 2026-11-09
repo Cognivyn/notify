@@ -1,8 +1,8 @@
 #!/usr/bin/env bun
-import { ConfigManager } from "@notify/config";
-import { NotificationService } from "@notify/core";
-import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@notify/channels";
-import { SecureStore } from "@notify/auth";
+import { ConfigManager } from "@cognivyn/config";
+import { NotificationService } from "@cognivyn/core";
+import { SmsChannel, EmailChannel, WhatsAppChannel, PushChannel } from "@cognivyn/channels";
+import { SecureStore } from "@cognivyn/auth";
 
 const GREEN = "\x1b[32m";
 const RED = "\x1b[31m";

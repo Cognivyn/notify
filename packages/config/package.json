@@ -1,5 +1,5 @@
 {
-  "name": "@notify/config",
+  "name": "@cognivyn/config",
   "version": "0.1.0",
   "license": "MIT",
   "description": "Configuration management for notify",
@@ -10,6 +10,7 @@
   "sideEffects": false,
   "files": [
     "dist",
+    "src",
     "LICENSE"
   ],
   "exports": {
@@ -27,8 +28,11 @@
     },
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "dependencies": {
-    "@notify/types": "workspace:*"
+    "@cognivyn/types": "workspace:*"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
