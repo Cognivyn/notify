@@ -14,7 +14,6 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "types": ["bun-types", "bun", "node"],
-    "baseUrl": ".",
     "paths": {
       "@cognivyn/types": ["./packages/types/src/index.ts"],
       "@cognivyn/config": ["./packages/config/src/index.ts"],
