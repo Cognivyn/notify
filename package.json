@@ -1,6 +1,6 @@
 {
   "name": "@cognivyn/notify",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "MIT",
   "description": "Cognivyn unified notification channel connection system",
   "type": "module",
@@ -9,15 +9,63 @@
   "types": "./dist/index.d.ts",
   "sideEffects": false,
   "files": [
-    "dist",
-    "src"
+    "dist"
   ],
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "bun": "./src/index.ts",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
+    },
+    "./sms": {
+      "types": "./dist/sms.d.ts",
+      "import": "./dist/sms.js",
+      "default": "./dist/sms.js"
+    },
+    "./email": {
+      "types": "./dist/email.d.ts",
+      "import": "./dist/email.js",
+      "default": "./dist/email.js"
+    },
+    "./whatsapp": {
+      "types": "./dist/whatsapp.d.ts",
+      "import": "./dist/whatsapp.js",
+      "default": "./dist/whatsapp.js"
+    },
+    "./push": {
+      "types": "./dist/push.d.ts",
+      "import": "./dist/push.js",
+      "default": "./dist/push.js"
+    },
+    "./auth": {
+      "types": "./dist/auth.d.ts",
+      "import": "./dist/auth.js",
+      "default": "./dist/auth.js"
+    },
+    "./config": {
+      "types": "./dist/config.d.ts",
+      "import": "./dist/config.js",
+      "default": "./dist/config.js"
+    },
+    "./service": {
+      "types": "./dist/service.d.ts",
+      "import": "./dist/service.js",
+      "default": "./dist/service.js"
+    },
+    "./builder": {
+      "types": "./dist/builder.d.ts",
+      "import": "./dist/builder.js",
+      "default": "./dist/builder.js"
+    },
+    "./queue": {
+      "types": "./dist/queue.d.ts",
+      "import": "./dist/queue.js",
+      "default": "./dist/queue.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "import": "./dist/types.js",
+      "default": "./dist/types.js"
     },
     "./package.json": "./package.json"
   },
@@ -29,16 +77,16 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "turbo run build",
-    "prepublishOnly": "tsrs -p tsconfig.build.json",
+    "build": "turbo run build && tsup",
+    "prepublishOnly": "tsup",
     "dev": "turbo run dev",
-    "test": "bun test ./packages/...",
+    "test": "bun test ./packages/... tests/...",
     "test:coverage": "bun test --coverage ./packages/...",
     "lint": "eslint packages --ext .ts",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
     "type-check": "turbo run type-check && tsrs --noEmit",
-    "clean": "turbo run clean"
+    "clean": "turbo run clean && rm -rf dist"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",
@@ -47,14 +95,9 @@
     "eslint": "^10.15.0",
     "prettier": "^3.3.3",
     "tsrs": "7.1.0-beta.tsrs4",
-    "turbo": "^2.11.10"
-  },
-  "dependencies": {
-    "@cognivyn/types": "workspace:*",
-    "@cognivyn/config": "workspace:*",
-    "@cognivyn/auth": "workspace:*",
-    "@cognivyn/core": "workspace:*",
-    "@cognivyn/channels": "workspace:*"
+    "tsup": "^9.0.0",
+    "turbo": "^2.11.10",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "bun": ">=1.4.3"
