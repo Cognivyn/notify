@@ -36,9 +36,9 @@
     "@cognivyn/channels": "workspace:*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
+    "build": "tsrs -p tsconfig.json",
     "dev": "bun run ./src/index.ts --help",
-    "type-check": "tsc --noEmit -p tsconfig.json",
+    "type-check": "tsrs --noEmit -p tsconfig.json",
     "test": "bun test",
     "clean": "rm -rf dist"
   }

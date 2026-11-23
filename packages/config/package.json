@@ -35,8 +35,8 @@
     "@cognivyn/types": "workspace:*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "type-check": "tsc --noEmit -p tsconfig.json",
+    "build": "tsrs -p tsconfig.json",
+    "type-check": "tsrs --noEmit -p tsconfig.json",
     "test": "bun test",
     "clean": "rm -rf dist"
   }
