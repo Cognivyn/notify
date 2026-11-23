@@ -30,14 +30,14 @@
   ],
   "scripts": {
     "build": "turbo run build",
-    "prepublishOnly": "tsc -p tsconfig.build.json",
+    "prepublishOnly": "tsrs -p tsconfig.build.json",
     "dev": "turbo run dev",
     "test": "bun test ./packages/...",
     "test:coverage": "bun test --coverage ./packages/...",
     "lint": "eslint packages --ext .ts",
     "format": "prettier --write \"**/*.{ts,json,md}\"",
     "format:check": "prettier --check \"**/*.{ts,json,md}\"",
-    "type-check": "turbo run type-check && tsc --noEmit",
+    "type-check": "turbo run type-check && tsrs --noEmit",
     "clean": "turbo run clean"
   },
   "devDependencies": {
@@ -46,8 +46,8 @@
     "bun-types": "^1.4.2",
     "eslint": "^9.12.0",
     "prettier": "^3.3.3",
-    "turbo": "^2.11.10",
-    "typescript": "^7.0.2"
+    "tsrs": "7.1.0-beta.tsrs4",
+    "turbo": "^2.11.10"
   },
   "dependencies": {
     "@cognivyn/types": "workspace:*",
