@@ -3,6 +3,7 @@ import {
   SmsChannel,
   MockSmsProvider,
   Msg91SmsProvider,
+  Fast2SmsSmsProvider,
   TwilioSmsProvider,
   validatePhone,
   type Msg91Options,
@@ -276,5 +277,195 @@ describe("Msg91SmsProvider", () => {
   test("channel rejects invalid phone before provider call", async () => {
     const c = new SmsChannel({ provider: new Msg91SmsProvider("k", "S") });
     expect((await c.send({ channel: "sms", to: "bad", body: "hi" })).success).toBe(false);
+  });
+});
+
+describe("Fast2SmsSmsProvider", () => {
+  test("validates constructor options", () => {
+    expect(() => new Fast2SmsSmsProvider({ apiKey: "" })).toThrow("Fast2SMS apiKey required");
+    expect(() => new Fast2SmsSmsProvider({ apiKey: "k", route: "bad" as any })).toThrow(
+      "Invalid Fast2SMS SMS route",
+    );
+    expect(() => new Fast2SmsSmsProvider({ apiKey: "k", route: "dlt" })).toThrow(
+      "Fast2SMS senderId required",
+    );
+    expect(
+      () => new Fast2SmsSmsProvider({ apiKey: "k", route: "dlt_manual", senderId: "TOOLONG" }),
+    ).toThrow("3-6 letters or digits");
+  });
+
+  test("sends Quick SMS with raw API-key authorization", async () => {
+    let capturedUrl = "";
+    let capturedHeaders: Record<string, string> = {};
+    let capturedBody: Record<string, unknown> = {};
+    const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
+      capturedUrl = String(url);
+      capturedHeaders = (init?.headers ?? {}) as Record<string, string>;
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(
+        JSON.stringify({ return: true, request_id: "f2s-quick-1", message: ["Sent"] }),
+        { status: 200 },
+      );
+    }) as unknown as typeof fetch;
+
+    const provider = new Fast2SmsSmsProvider({ apiKey: "secret-key", fetchFn });
+    const result = await provider.sendSms("+919876543210", "  Hello Fast2SMS  ");
+
+    expect(result.messageId).toBe("f2s-quick-1");
+    expect(capturedUrl).toBe("https://www.fast2sms.com/dev/bulkV2");
+    expect(capturedHeaders.Authorization).toBe("secret-key");
+    expect(capturedHeaders["Content-Type"]).toBe("application/json");
+    expect(capturedBody).toEqual({
+      message: "Hello Fast2SMS",
+      route: "q",
+      numbers: "919876543210",
+    });
+  });
+
+  test("sends DLT template SMS with ordered variables and per-message template override", async () => {
+    let capturedBody: Record<string, unknown> = {};
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(JSON.stringify({ return: true, request_id: "f2s-dlt-1" }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = new Fast2SmsSmsProvider({
+      apiKey: "key",
+      route: "dlt",
+      senderId: "FSTSMS",
+      templateId: "111111",
+      fetchFn,
+    });
+    const result = await provider.sendSms("+919876543210", "", {
+      templateId: "222222",
+      variables: { name: "Ada", code: 42 },
+    });
+
+    expect(result.messageId).toBe("f2s-dlt-1");
+    expect(capturedBody).toEqual({
+      sender_id: "FSTSMS",
+      message: "222222",
+      variables_values: "Ada|42",
+      route: "dlt",
+      numbers: "919876543210",
+    });
+  });
+
+  test("requires an effective template ID for DLT sends", async () => {
+    const provider = new Fast2SmsSmsProvider({
+      apiKey: "key",
+      route: "dlt",
+      senderId: "FSTSMS",
+      fetchFn: (async () => new Response("{}", { status: 200 })) as unknown as typeof fetch,
+    });
+    await expect(provider.sendSms("+919876543210", "")).rejects.toThrow(
+      "Fast2SMS template ID required",
+    );
+  });
+
+  test("sends DLT manual SMS with template and entity IDs", async () => {
+    let capturedBody: Record<string, unknown> = {};
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(JSON.stringify({ return: true, request_id: "f2s-manual-1" }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = new Fast2SmsSmsProvider({
+      apiKey: "key",
+      route: "dlt_manual",
+      senderId: "FSTSMS",
+      templateId: "1100000001111",
+      entityId: "1200000002222",
+      fetchFn,
+    });
+    await provider.sendSms("+919876543210", "Your approved message");
+
+    expect(capturedBody).toEqual({
+      sender_id: "FSTSMS",
+      message: "Your approved message",
+      route: "dlt_manual",
+      numbers: "919876543210",
+      template_id: "1100000001111",
+      entity_id: "1200000002222",
+    });
+  });
+
+  test("surfaces HTTP and HTTP-200 API errors", async () => {
+    const httpErrorFetch = (async () =>
+      new Response(
+        JSON.stringify({
+          return: false,
+          status_code: 412,
+          message: ["Invalid Authentication, Check Authorization Key"],
+        }),
+        { status: 401 },
+      )) as unknown as typeof fetch;
+    const httpErrorProvider = new Fast2SmsSmsProvider({ apiKey: "bad", fetchFn: httpErrorFetch });
+    await expect(httpErrorProvider.sendSms("+919876543210", "hi")).rejects.toThrow(
+      "Fast2SMS SMS error: Invalid Authentication, Check Authorization Key",
+    );
+
+    const apiErrorFetch = (async () =>
+      new Response(JSON.stringify({ return: false, message: ["Insufficient balance"] }), {
+        status: 200,
+      })) as unknown as typeof fetch;
+    const apiErrorProvider = new Fast2SmsSmsProvider({ apiKey: "key", fetchFn: apiErrorFetch });
+    await expect(apiErrorProvider.sendSms("+919876543210", "hi")).rejects.toThrow(
+      "Fast2SMS SMS error: Insufficient balance",
+    );
+  });
+
+  test("rejects malformed success responses and invalid phone numbers", async () => {
+    const malformedFetch = (async () =>
+      new Response(JSON.stringify({}), { status: 200 })) as unknown as typeof fetch;
+    const provider = new Fast2SmsSmsProvider({ apiKey: "key", fetchFn: malformedFetch });
+    await expect(provider.sendSms("+919876543210", "hi")).rejects.toThrow(
+      "Fast2SMS SMS error: invalid success response",
+    );
+    await expect(provider.sendSms("bad", "hi")).rejects.toThrow("Invalid E.164 phone number");
+  });
+
+  test("uses a fallback message ID when Fast2SMS omits request_id", async () => {
+    const fetchFn = (async () =>
+      new Response(JSON.stringify({ return: true }), { status: 200 })) as unknown as typeof fetch;
+    const provider = new Fast2SmsSmsProvider({ apiKey: "key", fetchFn });
+    expect((await provider.sendSms("+919876543210", "hi")).messageId).toContain("fast2sms-");
+  });
+
+  test("integrates with SmsChannel and retries transient failures", async () => {
+    let calls = 0;
+    let capturedBody: Record<string, unknown> = {};
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      calls++;
+      if (calls === 1) return new Response("boom", { status: 500 });
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(JSON.stringify({ return: true, request_id: "f2s-retry-1" }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+    const provider = new Fast2SmsSmsProvider({
+      apiKey: "key",
+      route: "dlt",
+      senderId: "FSTSMS",
+      fetchFn,
+    });
+    const channel = new SmsChannel({ provider, retries: 1 });
+    const result = await channel.send({
+      channel: "sms",
+      to: "+919876543210",
+      body: "",
+      data: { templateId: "333333", variables: { code: "1234" } },
+    });
+
+    expect(channel.providerName).toBe("fast2sms");
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBe("f2s-retry-1");
+    expect(calls).toBe(2);
+    expect(capturedBody.message).toBe("333333");
+    expect(capturedBody.variables_values).toBe("1234");
   });
 });

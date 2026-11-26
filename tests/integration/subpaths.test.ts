@@ -4,6 +4,7 @@ import {
   MockSmsProvider,
   TwilioSmsProvider,
   Msg91SmsProvider,
+  Fast2SmsSmsProvider,
 } from "@cognivyn/channels/sms";
 import {
   EmailChannel,
@@ -15,6 +16,7 @@ import {
   WhatsAppChannel,
   MockWhatsAppProvider,
   WhatsAppCloudApiProvider,
+  Fast2SmsWhatsAppProvider,
   TwilioWhatsAppProvider,
 } from "@cognivyn/channels/whatsapp";
 import {
@@ -61,9 +63,11 @@ describe("tree-shakable subpath imports", () => {
   test("imports all modern providers directly from their subpaths", () => {
     expect(TwilioSmsProvider).toBeDefined();
     expect(Msg91SmsProvider).toBeDefined();
+    expect(Fast2SmsSmsProvider).toBeDefined();
     expect(ResendEmailProvider).toBeDefined();
     expect(SesEmailProvider).toBeDefined();
     expect(WhatsAppCloudApiProvider).toBeDefined();
+    expect(Fast2SmsWhatsAppProvider).toBeDefined();
     expect(TwilioWhatsAppProvider).toBeDefined();
     expect(FcmV1PushProvider).toBeDefined();
     expect(FcmPushProvider).toBeDefined();

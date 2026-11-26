@@ -4,6 +4,7 @@ import {
   TwilioWhatsAppProvider,
   WhatsAppChannel,
   WhatsAppCloudApiProvider,
+  Fast2SmsWhatsAppProvider,
   validateWhatsApp,
   type WhatsAppMessage,
 } from "../src/whatsapp.js";
@@ -306,5 +307,200 @@ describe("TwilioWhatsAppProvider", () => {
     expect(
       () => new TwilioWhatsAppProvider({ accountSid: "AC123", authToken: "x", from: "" }),
     ).toThrow();
+  });
+});
+
+describe("Fast2SmsWhatsAppProvider", () => {
+  test("validates constructor options", () => {
+    expect(() => new Fast2SmsWhatsAppProvider({ apiKey: "", phoneNumberId: "123" })).toThrow(
+      "Fast2SMS apiKey required",
+    );
+    expect(() => new Fast2SmsWhatsAppProvider({ apiKey: "key", phoneNumberId: "" })).toThrow(
+      "phoneNumberId must be numeric",
+    );
+    expect(() => new Fast2SmsWhatsAppProvider({ apiKey: "key", phoneNumberId: "../123" })).toThrow(
+      "phoneNumberId must be numeric",
+    );
+    expect(
+      () =>
+        new Fast2SmsWhatsAppProvider({
+          apiKey: "key",
+          phoneNumberId: "123",
+          apiVersion: "v26/0",
+        }),
+    ).toThrow("apiVersion must match");
+  });
+
+  test("sends text with raw authorization and normalizes whatsapp:+ recipients", async () => {
+    let capturedUrl = "";
+    let capturedHeaders: Record<string, string> = {};
+    let capturedBody: Record<string, unknown> = {};
+    const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
+      capturedUrl = String(url);
+      capturedHeaders = (init?.headers ?? {}) as Record<string, string>;
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(JSON.stringify({ messages: [{ id: "wamid.fast2sms-text" }] }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = new Fast2SmsWhatsAppProvider({
+      apiKey: "secret-key",
+      phoneNumberId: "10987654321",
+      fetchFn,
+    });
+    const result = await provider.sendWhatsApp({
+      to: "whatsapp:+919876543210",
+      body: "Hello Fast2SMS",
+      previewUrl: true,
+    });
+
+    expect(result.messageId).toBe("wamid.fast2sms-text");
+    expect(capturedUrl).toBe("https://www.fast2sms.com/dev/whatsapp/v26.0/10987654321/messages");
+    expect(capturedHeaders.Authorization).toBe("secret-key");
+    expect(capturedHeaders["Content-Type"]).toBe("application/json");
+    expect(capturedBody.to).toBe("919876543210");
+    expect(capturedBody.type).toBe("text");
+    expect(capturedBody.text).toEqual({ body: "Hello Fast2SMS", preview_url: true });
+  });
+
+  test("sends templates with a custom API version and components", async () => {
+    let capturedUrl = "";
+    let capturedBody: Record<string, unknown> = {};
+    const fetchFn = (async (url: string | URL | Request, init?: RequestInit) => {
+      capturedUrl = String(url);
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(JSON.stringify({ messages: [{ id: "wamid.fast2sms-template" }] }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+
+    const provider = new Fast2SmsWhatsAppProvider({
+      apiKey: "key",
+      phoneNumberId: "12345",
+      apiVersion: "v25.0",
+      fetchFn,
+    });
+    await provider.sendWhatsApp({
+      to: "+15551234567",
+      body: "",
+      templateName: "order_update",
+      languageCode: "en_US",
+      components: [{ type: "body", parameters: [{ type: "text", text: "Order #456" }] }],
+    });
+
+    expect(capturedUrl).toBe("https://www.fast2sms.com/dev/whatsapp/v25.0/12345/messages");
+    expect(capturedBody.type).toBe("template");
+    expect(capturedBody.template).toEqual({
+      name: "order_update",
+      language: { code: "en_US" },
+      components: [{ type: "body", parameters: [{ type: "text", text: "Order #456" }] }],
+    });
+  });
+
+  test("sends supported media types with captions except audio", async () => {
+    let capturedBody: Record<string, unknown> = {};
+    const fetchFn = (async (_url: string | URL | Request, init?: RequestInit) => {
+      capturedBody = JSON.parse(init?.body as string);
+      return new Response(JSON.stringify({ messages: [{ id: "wamid.media" }] }), { status: 200 });
+    }) as unknown as typeof fetch;
+    const provider = new Fast2SmsWhatsAppProvider({
+      apiKey: "key",
+      phoneNumberId: "12345",
+      fetchFn,
+    });
+
+    for (const mediaType of ["image", "document", "audio", "video"] as const) {
+      await provider.sendWhatsApp({
+        to: "+15551234567",
+        body: "Media caption",
+        mediaUrl: `https://example.com/file.${mediaType}`,
+        mediaType,
+      });
+      expect(capturedBody.type).toBe(mediaType);
+      expect(capturedBody[mediaType]).toEqual({
+        link: `https://example.com/file.${mediaType}`,
+        ...(mediaType === "audio" ? {} : { caption: "Media caption" }),
+      });
+    }
+  });
+
+  test("surfaces Meta-style HTTP and HTTP-200 errors", async () => {
+    const httpErrorFetch = (async () =>
+      new Response(JSON.stringify({ error: { message: "Invalid API key" } }), {
+        status: 401,
+      })) as unknown as typeof fetch;
+    const httpErrorProvider = new Fast2SmsWhatsAppProvider({
+      apiKey: "bad",
+      phoneNumberId: "12345",
+      fetchFn: httpErrorFetch,
+    });
+    await expect(
+      httpErrorProvider.sendWhatsApp({ to: "+15551234567", body: "test" }),
+    ).rejects.toThrow("Fast2SMS WhatsApp error: Invalid API key");
+
+    const apiErrorFetch = (async () =>
+      new Response(JSON.stringify({ error: { message: "Template not approved" } }), {
+        status: 200,
+      })) as unknown as typeof fetch;
+    const apiErrorProvider = new Fast2SmsWhatsAppProvider({
+      apiKey: "key",
+      phoneNumberId: "12345",
+      fetchFn: apiErrorFetch,
+    });
+    await expect(
+      apiErrorProvider.sendWhatsApp({ to: "+15551234567", body: "test" }),
+    ).rejects.toThrow("Fast2SMS WhatsApp error: Template not approved");
+  });
+
+  test("rejects invalid JSON and uses a fallback message ID", async () => {
+    const invalidJsonFetch = (async () =>
+      new Response("not-json", { status: 200 })) as unknown as typeof fetch;
+    const invalidJsonProvider = new Fast2SmsWhatsAppProvider({
+      apiKey: "key",
+      phoneNumberId: "12345",
+      fetchFn: invalidJsonFetch,
+    });
+    await expect(
+      invalidJsonProvider.sendWhatsApp({ to: "+15551234567", body: "test" }),
+    ).rejects.toThrow("Fast2SMS WhatsApp error: invalid JSON response");
+
+    const fallbackFetch = (async () =>
+      new Response(JSON.stringify({}), { status: 200 })) as unknown as typeof fetch;
+    const fallbackProvider = new Fast2SmsWhatsAppProvider({
+      apiKey: "key",
+      phoneNumberId: "12345",
+      fetchFn: fallbackFetch,
+    });
+    expect(
+      (await fallbackProvider.sendWhatsApp({ to: "+15551234567", body: "test" })).messageId,
+    ).toContain("wa-fast2sms-");
+  });
+
+  test("integrates with WhatsAppChannel and retries transient failures", async () => {
+    let calls = 0;
+    const fetchFn = (async () => {
+      calls++;
+      if (calls === 1) return new Response("boom", { status: 500 });
+      return new Response(JSON.stringify({ messages: [{ id: "wamid.fast2sms-retry" }] }), {
+        status: 200,
+      });
+    }) as unknown as typeof fetch;
+    const provider = new Fast2SmsWhatsAppProvider({
+      apiKey: "key",
+      phoneNumberId: "12345",
+      fetchFn,
+    });
+    const channel = new WhatsAppChannel({ provider, retries: 1 });
+    const result = await channel.send({
+      channel: "whatsapp",
+      to: "whatsapp:+15551234567",
+      body: "Retry test",
+    });
+
+    expect(channel.providerName).toBe("fast2sms");
+    expect(result.success).toBe(true);
+    expect(result.messageId).toBe("wamid.fast2sms-retry");
+    expect(calls).toBe(2);
   });
 });

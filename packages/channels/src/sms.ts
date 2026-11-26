@@ -211,6 +211,113 @@ export class Msg91SmsProvider implements SmsProvider {
   }
 }
 
+export type Fast2SmsSmsRoute = "q" | "dlt" | "dlt_manual";
+
+export interface Fast2SmsSmsOptions {
+  apiKey: string;
+  route?: Fast2SmsSmsRoute;
+  senderId?: string;
+  templateId?: string;
+  entityId?: string;
+  fetchFn?: typeof fetch;
+}
+
+export class Fast2SmsSmsProvider implements SmsProvider {
+  readonly name = "fast2sms";
+  private apiKey: string;
+  private route: Fast2SmsSmsRoute;
+  private senderId?: string;
+  private templateId?: string;
+  private entityId?: string;
+  private fetchFn: typeof fetch;
+
+  constructor(options: Fast2SmsSmsOptions) {
+    if (!options.apiKey?.trim()) throw new Error("Fast2SMS apiKey required");
+    const route = options.route ?? "q";
+    if (route !== "q" && route !== "dlt" && route !== "dlt_manual") {
+      throw new Error(`Invalid Fast2SMS SMS route: ${route}`);
+    }
+    const senderId = options.senderId?.trim();
+    if (route !== "q") {
+      if (!senderId) throw new Error("Fast2SMS senderId required for DLT SMS");
+      if (!/^[a-zA-Z0-9]{3,6}$/.test(senderId)) {
+        throw new Error("Fast2SMS senderId must be 3-6 letters or digits");
+      }
+    }
+    this.apiKey = options.apiKey;
+    this.route = route;
+    this.senderId = senderId;
+    this.templateId = options.templateId?.trim();
+    this.entityId = options.entityId?.trim();
+    this.fetchFn = options.fetchFn ?? fetch;
+  }
+
+  async sendSms(
+    to: string,
+    body: string,
+    options?: Msg91SendOptions,
+  ): Promise<{ messageId: string }> {
+    validatePhone(to);
+    const numbers = to.slice(1);
+    let payload: Record<string, unknown>;
+
+    if (this.route === "dlt") {
+      const templateId = (options?.templateId ?? this.templateId)?.trim();
+      if (!templateId) throw new Error("Fast2SMS template ID required for DLT SMS");
+      payload = {
+        sender_id: this.senderId,
+        message: templateId,
+        variables_values: Object.values(options?.variables ?? {})
+          .map((value) => String(value))
+          .join("|"),
+        route: "dlt",
+        numbers,
+      };
+    } else if (this.route === "dlt_manual") {
+      payload = {
+        sender_id: this.senderId,
+        message: formatSms(body),
+        route: "dlt_manual",
+        numbers,
+      };
+      if (this.templateId) payload.template_id = this.templateId;
+      if (this.entityId) payload.entity_id = this.entityId;
+    } else {
+      payload = {
+        message: formatSms(body),
+        route: "q",
+        numbers,
+      };
+    }
+
+    const res = await this.fetchFn("https://www.fast2sms.com/dev/bulkV2", {
+      method: "POST",
+      headers: {
+        Authorization: this.apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = (await res.json().catch(() => null)) as {
+      return?: boolean;
+      request_id?: string;
+      message?: string[] | string;
+      status_code?: number;
+      status_code_description?: string;
+    } | null;
+
+    if (!res.ok || data?.return === false || (data?.status_code ?? 0) >= 400) {
+      const detail = Array.isArray(data?.message)
+        ? data.message.join(", ")
+        : (data?.message ?? data?.status_code_description ?? `HTTP ${res.status}`);
+      throw new Error(`Fast2SMS SMS error: ${detail}`);
+    }
+    if (data?.return !== true) throw new Error("Fast2SMS SMS error: invalid success response");
+    return { messageId: data.request_id ?? `fast2sms-${Date.now()}` };
+  }
+}
+
 export function validatePhone(to: string): void {
   if (!/^\+[1-9]\d{7,14}$/.test(to)) {
     throw new Error(`Invalid E.164 phone number: ${to}`);

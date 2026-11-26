@@ -20,9 +20,9 @@ bun run ./packages/cli/dist/index.js test sms --to +15551234567 --body "hello"
 - `@cognivyn/auth` — ApiKey + ClientSecret, SecureStore (`@cognivyn/auth`, `@cognivyn/auth/providers`, `@cognivyn/auth/store`)
 - `@cognivyn/core` — NotificationService, Builder, Queue (`@cognivyn/core`, `@cognivyn/core/service`, `@cognivyn/core/builder`, `@cognivyn/core/queue`)
 - `@cognivyn/channels` — tree-shakable subpaths for channels:
-  - `@cognivyn/channels/sms` (Twilio, MSG91 Flow API v5 + Route SMS)
+  - `@cognivyn/channels/sms` (Twilio, MSG91 Flow API v5 + Route SMS, Fast2SMS Quick/DLT SMS)
   - `@cognivyn/channels/email` (Resend, AWS SESv2 SigV4)
-  - `@cognivyn/channels/whatsapp` (Meta WhatsApp Cloud API v21.0+, Twilio WhatsApp)
+  - `@cognivyn/channels/whatsapp` (Meta WhatsApp Cloud API v21.0+, Twilio WhatsApp, Fast2SMS WhatsApp)
   - `@cognivyn/channels/push` (FCM HTTP v1, FCM Legacy, Apple APNs)
 - `@cognivyn/cli` — `notify auth/test/config/providers`
 
@@ -48,14 +48,14 @@ Examples in `examples/basic.ts`.
 ## Standards & Invariants
 
 - [x] All channels functional and tested (105+ tests)
-- [x] Modern APIs supported: Meta WhatsApp Cloud API v21.0, Google FCM HTTP v1, AWS SESv2, Resend, Twilio, MSG91 Flow API
+- [x] Modern APIs supported: Meta WhatsApp Cloud API v21.0, Google FCM HTTP v1, AWS SESv2, Resend, Twilio, MSG91 Flow API, Fast2SMS SMS and WhatsApp
 - [x] CLI fully operational with multi-channel testing and auth config
 - [x] Comprehensive documentation and AI Agent ready (`AGENTS.md`, `CLAUDE.md`)
 - [x] Zero unnecessary third-party dependencies, minimal deps, Bun 1.4+ & Turbo
 
 ## Trademark Notice
 
-Cognivyn is not affiliated with, endorsed by, or sponsored by Twilio, Meta, Google, Amazon, Resend, or MSG91. All provider trademarks belong to their respective owners. This library implements their public APIs independently.
+Cognivyn is not affiliated with, endorsed by, or sponsored by Twilio, Meta, Google, Amazon, Resend, MSG91, or Fast2SMS. All provider trademarks belong to their respective owners. This library implements their public APIs independently.
 
 ## License
 
