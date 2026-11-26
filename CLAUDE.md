@@ -10,8 +10,8 @@ bun run build           # Turbo build all packages (tsc -p tsconfig.json)
 bun test                # Run all unit and integration tests
 bun run type-check      # Type check across all workspaces (tsc --noEmit)
 bun run lint            # ESLint check
-bun run format:check    # Check Prettier formatting
-bun run format          # Fix Prettier formatting
+bun run format:check    # Check Bun formatting
+bun run format          # Apply Bun formatting
 ```
 
 Run CLI locally:
@@ -23,7 +23,7 @@ bun run ./packages/cli/dist/index.js test sms --to +15551234567 --body "hello"
 
 ## Architecture & Code Conventions
 
-- **Runtime**: Bun `>=1.4.2`. Never use `npm`, `npx`, `yarn`, or `pnpm`.
+- **Development**: Bun `>=1.4.4`. Never use `npm`, `npx`, `yarn`, or `pnpm`.
 - **Zero Heavy SDKs**: Implement APIs using native `fetch` and `node:crypto`. Do not add bloated vendor SDK packages (`@aws-sdk/*`, `firebase-admin`, `twilio`).
 - **Injectable `fetchFn`**: All provider classes accept `fetchFn?: typeof fetch` in constructor options to allow 100% offline, deterministic tests.
 - **Tree-Shaking**: All packages specify `sideEffects: false` and explicit `exports` maps.

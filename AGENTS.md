@@ -49,8 +49,8 @@ Run all commands using `bun`:
 | **Build**        | `bun run build`                                  | Runs Turbo build (`tsc -p tsconfig.json`)        |
 | **Test**         | `bun test`                                       | Runs all unit and integration tests (100+ tests) |
 | **Type-Check**   | `bun run type-check`                             | Runs Turbo `tsc --noEmit` across all workspaces  |
-| **Format Check** | `bun run format:check`                           | Verifies Prettier compliance                     |
-| **Format Fix**   | `bun run format`                                 | Applies Prettier formatting                      |
+| **Format Check** | `bun run format:check`                           | Verifies Bun formatting                          |
+| **Format Fix**   | `bun run format`                                 | Applies Bun formatting                           |
 | **CLI Run**      | `bun run ./packages/cli/dist/index.js <command>` | Test CLI commands                                |
 
 ---
