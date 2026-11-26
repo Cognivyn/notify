@@ -72,9 +72,9 @@ export async function main(argv: string[] = process.argv.slice(2)): Promise<numb
   if (cmd === "providers") {
     console.log(ok("Available providers:"));
     for (const p of [
-      "sms(mock,twilio,msg91)",
+      "sms(mock,twilio,msg91,fast2sms)",
       "email(mock,resend,ses)",
-      "whatsapp(mock,cloudapi,twilio)",
+      "whatsapp(mock,cloudapi,twilio,fast2sms)",
       "push(mock,fcm,fcm-v1,apns)",
     ])
       console.log(` - ${p}`);

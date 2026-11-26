@@ -152,6 +152,101 @@ export class WhatsAppCloudApiProvider implements WhatsAppProvider {
   }
 }
 
+export interface Fast2SmsWhatsAppOptions {
+  apiKey: string;
+  phoneNumberId: string;
+  apiVersion?: string;
+  fetchFn?: typeof fetch;
+}
+
+export class Fast2SmsWhatsAppProvider implements WhatsAppProvider {
+  readonly name = "fast2sms";
+  private apiKey: string;
+  private phoneNumberId: string;
+  private apiVersion: string;
+  private fetchFn: typeof fetch;
+
+  constructor(options: Fast2SmsWhatsAppOptions) {
+    if (!options.apiKey?.trim()) throw new Error("Fast2SMS apiKey required");
+    const phoneNumberId = options.phoneNumberId?.trim();
+    if (!phoneNumberId || !/^\d+$/.test(phoneNumberId)) {
+      throw new Error("Fast2SMS WhatsApp phoneNumberId must be numeric");
+    }
+    const apiVersion = options.apiVersion ?? "v26.0";
+    if (!/^v\d+\.\d+$/.test(apiVersion)) {
+      throw new Error("Fast2SMS WhatsApp apiVersion must match vN.N");
+    }
+    this.apiKey = options.apiKey;
+    this.phoneNumberId = phoneNumberId;
+    this.apiVersion = apiVersion;
+    this.fetchFn = options.fetchFn ?? fetch;
+  }
+
+  async sendWhatsApp(msg: WhatsAppSendOptions): Promise<{ messageId: string }> {
+    const digits = msg.to.replace(/^whatsapp:/, "").replace(/^\+/, "");
+    const url = `https://www.fast2sms.com/dev/whatsapp/${this.apiVersion}/${this.phoneNumberId}/messages`;
+    let payload: Record<string, unknown>;
+
+    if (msg.templateName) {
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: digits,
+        type: "template",
+        template: {
+          name: msg.templateName,
+          language: { code: msg.languageCode ?? "en_US" },
+          ...(msg.components && msg.components.length > 0 ? { components: msg.components } : {}),
+        },
+      };
+    } else if (msg.mediaUrl && msg.mediaType !== "text") {
+      const mediaType = msg.mediaType ?? "image";
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: digits,
+        type: mediaType,
+        [mediaType]: {
+          link: msg.mediaUrl,
+          ...(mediaType !== "audio" && msg.body ? { caption: msg.body } : {}),
+        },
+      };
+    } else {
+      payload = {
+        messaging_product: "whatsapp",
+        recipient_type: "individual",
+        to: digits,
+        type: "text",
+        text: {
+          body: msg.body,
+          preview_url: msg.previewUrl ?? false,
+        },
+      };
+    }
+
+    const res = await this.fetchFn(url, {
+      method: "POST",
+      headers: {
+        Authorization: this.apiKey,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const data = (await res.json().catch(() => null)) as {
+      error?: { message?: string };
+      messages?: Array<{ id?: string }>;
+    } | null;
+
+    if (!res.ok || data?.error) {
+      const detail = data?.error?.message ?? `HTTP ${res.status}`;
+      throw new Error(`Fast2SMS WhatsApp error: ${detail}`);
+    }
+    if (!data) throw new Error("Fast2SMS WhatsApp error: invalid JSON response");
+    return { messageId: data.messages?.[0]?.id ?? `wa-fast2sms-${Date.now()}` };
+  }
+}
+
 export interface TwilioWhatsAppOptions {
   accountSid: string;
   authToken: string;

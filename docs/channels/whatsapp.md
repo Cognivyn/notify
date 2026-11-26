@@ -1,6 +1,6 @@
-# WhatsApp — Cloud API (Meta) / Twilio / Mock
+# WhatsApp — Cloud API (Meta) / Twilio / Fast2SMS / Mock
 
-The WhatsApp channel provides multi-provider messaging through the `WhatsAppProvider` adapter interface. Built-in providers include `MockWhatsAppProvider` (for testing/development), `WhatsAppCloudApiProvider` (Meta Graph API v21.0+), and `TwilioWhatsAppProvider`.
+The WhatsApp channel provides multi-provider messaging through the `WhatsAppProvider` adapter interface. Built-in providers include `MockWhatsAppProvider` (for testing/development), `WhatsAppCloudApiProvider` (Meta Graph API v21.0+), `TwilioWhatsAppProvider`, and `Fast2SmsWhatsAppProvider`.
 
 ## Quick start
 
@@ -81,7 +81,46 @@ await channel.send({
 });
 ```
 
-### 3. Mock Provider (Testing & Development)
+### 3. Fast2SMS WhatsApp
+
+Fast2SMS uses the API key directly in the `Authorization` header and supports Meta-compatible text, media, and template messages. The default API version is `v26.0` and can be overridden.
+
+```ts
+import { WhatsAppChannel, Fast2SmsWhatsAppProvider } from "@cognivyn/channels/whatsapp";
+
+const channel = new WhatsAppChannel({
+  provider: new Fast2SmsWhatsAppProvider({
+    apiKey: process.env.FAST2SMS_API_KEY!,
+    phoneNumberId: process.env.FAST2SMS_WHATSAPP_PHONE_NUMBER_ID!,
+    apiVersion: "v26.0",
+  }),
+});
+
+await channel.send({
+  channel: "whatsapp",
+  to: "+919876543210",
+  body: "Hello from Fast2SMS WhatsApp!",
+  previewUrl: true,
+});
+
+await channel.send({
+  channel: "whatsapp",
+  to: "+919876543210",
+  body: "",
+  templateName: "order_update",
+  languageCode: "en_US",
+  components: [
+    {
+      type: "body",
+      parameters: [{ type: "text", text: "Order #98765" }],
+    },
+  ],
+});
+```
+
+Session text and media messages can only be sent within 24 hours of the customer's last reply. Use approved templates for messages outside that window. Both `+919876543210` and `whatsapp:+919876543210` destinations are normalized before sending.
+
+### 4. Mock Provider (Testing & Development)
 
 ```ts
 import { WhatsAppChannel, MockWhatsAppProvider } from "@cognivyn/channels/whatsapp";

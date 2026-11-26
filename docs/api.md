@@ -7,9 +7,9 @@
 
 ## Tree-Shakable Entrypoints
 
-- `@cognivyn/channels/sms` — `SmsChannel`, `TwilioSmsProvider`, `Msg91SmsProvider`, `MockSmsProvider`
+- `@cognivyn/channels/sms` — `SmsChannel`, `TwilioSmsProvider`, `Msg91SmsProvider`, `Fast2SmsSmsProvider`, `MockSmsProvider`
 - `@cognivyn/channels/email` — `EmailChannel`, `ResendEmailProvider`, `SesEmailProvider`, `MockEmailProvider`
-- `@cognivyn/channels/whatsapp` — `WhatsAppChannel`
+- `@cognivyn/channels/whatsapp` — `WhatsAppChannel`, `WhatsAppCloudApiProvider`, `TwilioWhatsAppProvider`, `Fast2SmsWhatsAppProvider`, `MockWhatsAppProvider`
 - `@cognivyn/channels/push` — `PushChannel`, `FcmPushProvider`, `ApnsPushProvider`
 - `@cognivyn/core/service` — `NotificationService`
 - `@cognivyn/core/builder` — `NotificationBuilder`
