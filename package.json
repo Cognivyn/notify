@@ -72,7 +72,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "packageManager": "bun@1.4.3",
+  "packageManager": "bun@1.4.4",
   "workspaces": [
     "packages/*"
   ],
@@ -83,8 +83,8 @@
     "test": "bun test ./packages/... tests/...",
     "test:coverage": "bun test --coverage ./packages/...",
     "lint": "eslint packages --ext .ts",
-    "format": "prettier --write \"**/*.{ts,json,md}\"",
-    "format:check": "prettier --check \"**/*.{ts,json,md}\"",
+    "format": "bun fmt",
+    "format:check": "bun fmt --check",
     "type-check": "turbo run type-check && tsrs --noEmit",
     "clean": "turbo run clean && rm -rf dist"
   },
@@ -93,7 +93,6 @@
     "@types/node": "^26.6.6",
     "bun-types": "^1.4.2",
     "eslint": "^10.15.0",
-    "prettier": "^3.3.3",
     "tsrs": "7.1.0-beta.tsrs4",
     "tsup": "^9.0.0",
     "turbo": "^2.11.10",

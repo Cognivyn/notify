@@ -51,7 +51,7 @@ Examples in `examples/basic.ts`.
 - [x] Modern APIs supported: Meta WhatsApp Cloud API v21.0, Google FCM HTTP v1, AWS SESv2, Resend, Twilio, MSG91 Flow API, Fast2SMS SMS and WhatsApp
 - [x] CLI fully operational with multi-channel testing and auth config
 - [x] Comprehensive documentation and AI Agent ready (`AGENTS.md`, `CLAUDE.md`)
-- [x] Zero unnecessary third-party dependencies, minimal deps, Bun 1.4+ & Turbo
+- [x] Zero unnecessary third-party dependencies, minimal deps, Bun 1.4.4+ tooling & Turbo
 
 ## Trademark Notice
 
